@@ -1,9 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Version>1.0.0</Version>
+    <PackageId>EnumerablePrinter</PackageId>
+    <Authors>Wayne Blackmon</Authors>
+    <Company>wblackmon</Company>
+    <Description>A C# extension for printing IEnumerable collections with optional formatting and output redirection — inspired by Python’s print().</Description>
+    <PackageTags>Enumerable Print CSharp Extension Debugging Logging</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/wblackmon/EnumerablePrinter</RepositoryUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
-
 </Project>
