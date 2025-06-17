@@ -16,7 +16,7 @@ A lightweight C# extension that brings Python-style `print()` elegance to your `
 
 ---
 
-### ➤ Test
+## 🚀 Test
 
 dotnet test
 
