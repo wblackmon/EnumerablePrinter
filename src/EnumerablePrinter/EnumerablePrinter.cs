@@ -43,5 +43,14 @@ namespace EnumerablePrinter
             }
             writer.WriteLine(" }");
         }
+        public static bool IsAlphabetical(string input)
+        {
+            for (int i = 1; i < input.Length; i++)
+            {
+                if (input[i] < input[i - 1])
+                    return false;
+            }
+            return true;
+        }
     }
 }

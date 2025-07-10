@@ -1,16 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Version>1.0.0</Version>
-    <PackageId>EnumerablePrinter</PackageId>
-    <Authors>Wayne Blackmon</Authors>
-    <Company>wblackmon</Company>
-    <Description>A C# extension for printing IEnumerable collections with optional formatting and output redirection — inspired by Python’s print().</Description>
-    <PackageTags>Enumerable Print CSharp Extension Debugging Logging</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/wblackmon/EnumerablePrinter</RepositoryUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  <TargetFramework>net8.0</TargetFramework>
+  <Version>1.0.1</Version>
+  <PackageId>EnumerablePrinter</PackageId>
+  <Authors>Wayne Blackmon</Authors>
+  <Company>wblackmon</Company>
+  <Description>A C# extension for printing IEnumerable collections like Python’s print().</Description>
+  <PackageTags>Enumerable Print CSharp Debugging</PackageTags>
+  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  <IncludeSymbols>true</IncludeSymbols>
+  <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  <PackageReadmeFile>README.md</PackageReadmeFile>
+  <RepositoryUrl>https://github.com/wblackmon/EnumerablePrinter</RepositoryUrl>
+  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
 </Project>
