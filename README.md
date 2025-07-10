@@ -1,6 +1,6 @@
 # EnumerablePrinter
 
-[![NuGet](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter)
+[![NuGet](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter/1.0.1)
 [![Build](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml/badge.svg)](https://github.com/wblackmon/EnumerablePrinter/actions)
 
 A lightweight C# extension that brings Python-style `print()` elegance to your `IEnumerable<T>`. Debug smarter, print cleaner.
