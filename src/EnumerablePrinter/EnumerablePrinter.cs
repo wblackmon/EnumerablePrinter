@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using Microsoft.VisualBasic;
 
 namespace EnumerablePrinter
 {
@@ -82,6 +83,65 @@ namespace EnumerablePrinter
 
             return true;
         }
+        /// <summary>
+        /// Returns a subsequence of the source collection, similar to Python's slice syntax.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type of elements in the source sequence.
+        /// </typeparam>
+        /// <param name="source">
+        /// The sequence to slice. Must not be <c>null</c>.
+        /// </param>
+        /// <param name="start">
+        /// The zero-based starting index of the slice. If <c>null</c>, slicing begins at the start of the sequence.
+        /// Negative values are interpreted as offsets from the end.
+        /// </param>
+        /// <param name="end">
+        /// The zero-based ending index (exclusive) of the slice. If <c>null</c>, slicing continues to the end of the sequence.
+        /// Negative values are interpreted as offsets from the end.
+        /// </param>
+        /// <param name="step">
+        /// The interval between returned elements. Must be greater than zero. Defaults to 1.
+        /// </param>
+        /// <returns>
+        /// A new <see cref="IEnumerable{T}"/> containing the elements from <paramref name="source"/> within the specified range,
+        /// taken at the specified step. If the range is empty, an empty sequence is returned.
+        /// </returns>
+        /// <exception cref="ArgumentNullException">
+        /// Thrown if <paramref name="source"/> is <c>null</c>.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown if <paramref name="step"/> is less than or equal to zero.
+        /// </exception>
+        public static IEnumerable<T> Slice<T>(
+            this IEnumerable<T> source,
+            int? start = null,
+            int? end = null,
+            int step = 1)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (step <= 0) throw new ArgumentOutOfRangeException(nameof(step), "Step must be greater than zero.");
 
+            var list = source as IList<T> ?? source.ToList();
+            int count = list.Count;
+
+            int from = start ?? 0;
+            int to = end ?? count;
+
+            // Handle negative indices
+            if (from < 0) from = count + from;
+            if (to < 0) to = count + to;
+
+            // Clamp to valid range
+            from = Math.Clamp(from, 0, count);
+            to = Math.Clamp(to, 0, count);
+
+            // If range is invalid, return empty
+            if (from >= to)
+                yield break;
+
+            for (int i = from; i < to; i += step)
+                yield return list[i];
+        }
     }
 }
