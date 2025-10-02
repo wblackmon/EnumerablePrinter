@@ -76,6 +76,24 @@ names.Print(n => n.ToUpper(), writer);
 Console.WriteLine(writer.ToString());
 // Output: { WAYNE, LUCIUS, ALFRED }
 ```
+
+## ➤ IsAlphabetical Example
+
+```csharp
+var names = new[] { "Alice", "Bob", "Charlie" };
+names.IsAlphabetical(); // true
+var unsorted = new[] { "Charlie", "Alice", "Bob" };
+unsorted.IsAlphabetical(); // false
+
+var people = new[]
+{
+    new Person { Name = "Alice" },
+    new Person { Name = "Bob" },
+    new Person { Name = "Charlie" }
+};
+people.IsAlphabetical(p => p.Name); // true
+```
+
 ## ➤ Slice Example
 
 ```csharp
