@@ -26,15 +26,35 @@ namespace EnumerablePrinter
             TextWriter? writer = null)
         {
             writer ??= Console.Out;
-            toString ??= item => item?.ToString() ?? "null";
 
-            if (collection == null || !collection.Any())
+            if (collection == null)
             {
                 writer.WriteLine("{ }");
                 return;
             }
 
+            // Special cases
+            if (collection is string s)
+            {
+                writer.WriteLine($"\"{s}\"");
+                return;
+            }
+
+            if (typeof(T) == typeof(char))
+            {
+                var chars = collection.Cast<char>().ToArray();
+                writer.WriteLine($"\"{new string(chars)}\"");
+                return;
+            }
+
+            toString ??= item => item?.ToString() ?? "null";
+
             var list = collection.ToList();
+            if (list.Count == 0)
+            {
+                writer.WriteLine("{ }");
+                return;
+            }
 
             writer.Write("{ ");
             for (int i = 0; i < list.Count; i++)
@@ -142,6 +162,32 @@ namespace EnumerablePrinter
 
             for (int i = from; i < to; i += step)
                 yield return list[i];
+        }
+        /// <summary>
+        /// Prints a string to the specified <see cref="TextWriter"/>, or to <see cref="Console.Out"/> if none is provided.
+        /// </summary>
+        /// <param name="s">The string to print. If <c>null</c>, prints <c>null</c>.</param>
+        /// <param name="writer">Optional output stream. Defaults to <see cref="Console.Out"/>.</param>
+        public static void Print(this string? s, TextWriter? writer = null)
+        {
+            writer ??= Console.Out;
+            writer.WriteLine(s == null ? "null" : $"\"{s}\"");
+        }
+
+        /// <summary>
+        /// Prints a summary of a byte array to the specified <see cref="TextWriter"/>, or to <see cref="Console.Out"/> if none is provided.
+        /// </summary>
+        /// <param name="bytes">The byte array to print. If <c>null</c>, prints <c>null</c>; otherwise prints <c>byte[n]</c> where <c>n</c> is the array length.</param>
+        /// <param name="writer">Optional output stream. Defaults to <see cref="Console.Out"/>.</param>
+        public static void Print(this byte[]? bytes, TextWriter? writer = null)
+        {
+            writer ??= Console.Out;
+            if (bytes == null)
+            {
+                writer.WriteLine("null");
+                return;
+            }
+            writer.WriteLine($"byte[{bytes.Length}]");
         }
     }
 }
