@@ -61,7 +61,7 @@ namespace EnumerablePrinter
                 }
                 else
                 {
-                    text = toString((T)element!);
+                    text = (toString ?? (x => x?.ToString() ?? "null"))((T)element!);
                 }
 
                 writer.Write(text);
