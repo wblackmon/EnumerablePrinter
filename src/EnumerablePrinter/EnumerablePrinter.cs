@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using Microsoft.VisualBasic;
+﻿using System.Collections;
 
 namespace EnumerablePrinter
 {
@@ -21,49 +15,95 @@ namespace EnumerablePrinter
         /// <param name="toString">Optional custom formatter for each element.</param>
         /// <param name="writer">Optional TextWriter (defaults to Console.Out).</param>
         public static void Print<T>(
-            this IEnumerable<T>? collection,
+            this IEnumerable<T>? source,
             Func<T, string>? toString = null,
             TextWriter? writer = null)
         {
             writer ??= Console.Out;
 
-            if (collection == null)
+            if (source == null)
+            {
+                writer.WriteLine("null");
+                return;
+            }
+
+            // Special case: char sequences → print as a string literal
+            if (source is IEnumerable<char> chars)
+            {
+                writer.WriteLine($"\"{new string(chars.ToArray())}\"");
+                return;
+            }
+
+            var items = source.ToList();
+            if (items.Count == 0)
             {
                 writer.WriteLine("{ }");
                 return;
             }
 
-            // Special cases
-            if (collection is string s)
-            {
-                writer.WriteLine($"\"{s}\"");
-                return;
-            }
-
-            if (typeof(T) == typeof(char))
-            {
-                var chars = collection.Cast<char>().ToArray();
-                writer.WriteLine($"\"{new string(chars)}\"");
-                return;
-            }
-
-            toString ??= item => item?.ToString() ?? "null";
-
-            var list = collection.ToList();
-            if (list.Count == 0)
-            {
-                writer.WriteLine("{ }");
-                return;
-            }
+            toString ??= x => x?.ToString() ?? "null";
 
             writer.Write("{ ");
-            for (int i = 0; i < list.Count; i++)
+            for (int i = 0; i < items.Count; i++)
             {
-                writer.Write(toString(list[i]));
-                if (i < list.Count - 1)
+                var element = items[i];
+                string text;
+
+                if (element is string s && toString == null)
+                {
+                    text = $"\"{s}\"";
+                }
+                else if (element is IEnumerable nested && element is not string && element is not byte[])
+                {
+                    var sw = new StringWriter();
+                    PrintNested(nested, sw);
+                    text = sw.ToString().Trim();
+                }
+                else
+                {
+                    text = toString((T)element!);
+                }
+
+                writer.Write(text);
+
+                if (i < items.Count - 1)
                     writer.Write(", ");
             }
             writer.WriteLine(" }");
+        }
+        private static void PrintNested(IEnumerable nested, TextWriter writer)
+        {
+            var items = new List<object?>();
+            foreach (var item in nested)
+                items.Add(item);
+
+            writer.Write("{ ");
+            for (int i = 0; i < items.Count; i++)
+            {
+                var element = items[i];
+                string text;
+
+                if (element is string s)
+                {
+                    text = $"\"{s}\"";
+                }
+                else if (element is IEnumerable inner && element is not string && element is not byte[])
+                {
+                    var sw = new StringWriter();
+                    PrintNested(inner, sw);
+                    text = sw.ToString().Trim();
+                }
+                else
+                {
+                    text = element?.ToString() ?? "null";
+                }
+
+                writer.Write(text);
+
+                if (i < items.Count - 1)
+                    writer.Write(", ");
+            }
+            writer.Write(" }");
         }
         /// <summary>
         /// Determines whether the elements in the sequence are sorted in ascending alphabetical order.
@@ -188,6 +228,51 @@ namespace EnumerablePrinter
                 return;
             }
             writer.WriteLine($"byte[{bytes.Length}]");
+        }
+        /// <summary>
+        /// Prints the contents of a dictionary in a JSON‑like format.
+        /// </summary>
+        /// <typeparam name="TKey">The type of dictionary keys.</typeparam>
+        /// <typeparam name="TValue">The type of dictionary values.</typeparam>
+        /// <param name="dict">The dictionary to print. If <c>null</c>, prints <c>null</c>.</param>
+        /// <param name="keyToString">Optional formatter for keys. Defaults to <c>ToString()</c>.</param>
+        /// <param name="valueToString">Optional formatter for values. Defaults to <c>ToString()</c>.</param>
+        /// <param name="writer">Optional output stream. Defaults to <see cref="Console.Out"/>.</param>
+        public static void Print<TKey, TValue>(
+            this IDictionary<TKey, TValue> dictionary,
+            Func<TKey, string>? keyToString = null,
+            Func<TValue, string>? valueToString = null,
+            TextWriter? writer = null)
+        {
+            writer ??= Console.Out;
+
+            if (dictionary == null)
+            {
+                writer.WriteLine("null");
+                return;
+            }
+
+            if (dictionary.Count == 0)
+            {
+                writer.WriteLine("{ }");
+                return;
+            }
+
+            keyToString ??= k => k.ToString() ?? "null";
+            valueToString ??= v => v.ToString() ?? "null";
+
+            writer.Write("{ ");
+            int i = 0;
+            foreach (var kvp in dictionary)
+            {
+                writer.Write($"\"{keyToString(kvp.Key)}\": {valueToString(kvp.Value)}");
+                if (i < dictionary.Count - 1)
+                {
+                    writer.Write(", ");
+                }
+                i++;
+            }
+            writer.WriteLine(" }");
         }
     }
 }
