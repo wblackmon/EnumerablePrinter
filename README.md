@@ -1,6 +1,5 @@
 # EnumerablePrinter
 
-[![NuGet](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter/1.0.5)
 [![NuGet Build](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml/badge.svg)](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml)
 
 **Python-inspired LINQ extensions for expressive, ergonomic collection handling in C#.**
