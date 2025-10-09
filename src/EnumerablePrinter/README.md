@@ -1,19 +1,10 @@
 # EnumerablePrinter
 
 [![NuGet](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter/1.0.5)
-[![NuGet Build](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml/badge.svg)](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml)
 
 **Python-inspired LINQ extensions for expressive, ergonomic collection handling in C#.**
 
 EnumerablePrinter brings the clarity and power of Python’s sequence operations to C#, with intuitive methods like `Slice`, `Print`, and `IsAlphabetical`. Designed for developer ergonomics, deferred execution, and clean diagnostics.
-
-## ✨ Latest Updates
-
-- **Dictionary Support** – Print key/value pairs inline for easy readability.  
-- **Nested Collections** – Recursively prints arrays, lists, and sets without duplication.  
-- **Char Enumerable Special Case** – `IEnumerable<char>` now prints as a string literal instead of a collection.  
-- **Custom Formatting** – User‑provided delegates are respected, even for strings.  
-- **Output Redirection** – Send output to any `TextWriter` (console, file, or in‑memory).  
 
 ---
 
@@ -66,52 +57,6 @@ new[] { 1, 2, 3 }.Print();
 ```csharp
 Enumerable.Empty<int>().Print();
 // Output: { }
-```
-
-### ➤ Printing a Dictionary
-
-```csharp
-var dict = new Dictionary<string, int>
-{
-    ["Wayne"] = 1,
-    ["Lucius"] = 2,
-    ["Alfred"] = 3
-};
-dict.Print();
-// Output:
-// { Wayne: 1, Lucius: 2, Alfred: 3 }
-```
-
-### ➤ Printing Nested Collections
-
-```csharp
-var nested = new List<int[]>
-{
-    new[] { 1, 2 },
-    new[] { 3, 4 }
-};
-
-nested.Print();
-// Output:
-// { { 1, 2 }, { 3, 4 } }
-```
-
-### ➤ Combining Dictionaries and Nested Collections
-
-```csharp
-var complex = new Dictionary<string, object>
-{
-    ["Numbers"] = new[] { 1, 2, 3 },
-    ["Matrix"] = new List<int[]>
-    {
-        new[] { 1, 2 },
-        new[] { 3, 4 }
-    }
-};
-complex.Print();
-// Output:
-// { Numbers: { 1, 2, 3 }, Matrix: { { 1, 2 }, { 3, 4 } } }// Output:
-// { { 1, 2 }, { 3, 4 } }
 ```
 
 ### ➤ With Custom Formatting
