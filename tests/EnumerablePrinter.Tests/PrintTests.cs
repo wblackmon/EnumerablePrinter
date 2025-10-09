@@ -76,5 +76,21 @@ namespace EnumerablePrinter.Tests
             var result = sb.ToString().Replace("\r\n", "\n");
             Assert.Equal("{ WAYNE, LUCIUS, ALFRED }\n", result);
         }
+
+        [Fact]
+        public void Print_Dictionary_PrintsKeyValuePairs()
+        {
+            var dict = new Dictionary<string, int> { ["Wayne"] = 1, ["Alfred"] = 2 };
+            var result = CaptureOutput(() => dict.Print());
+            Assert.Equal("{ \"Wayne\": 1, \"Alfred\": 2 }\n", result);
+        }
+
+        [Fact]
+        public void Print_NestedCollections_PrintsRecursively()
+        {
+            var matrix = new[] { new[] { 1, 2 }, new[] { 3, 4 } };
+            var result = CaptureOutput(() => matrix.Print());
+            Assert.Equal("{ { 1, 2 }, { 3, 4 } }\n", result);
+        }
     }
 }
