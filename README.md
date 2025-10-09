@@ -1,6 +1,6 @@
 # EnumerablePrinter
 
-[![NuGet Build](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml/badge.svg)](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml)
+[![NuGet](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter/1.0.5)
 
 **Python-inspired LINQ extensions for expressive, ergonomic collection handling in C#.**
 
@@ -168,3 +168,4 @@ data.Slice(0, null, 2);  // 1, 3, 5, 7, 9
 ## 📝 License
 
 Licensed under the MIT License.
+
