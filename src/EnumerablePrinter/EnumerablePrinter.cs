@@ -258,8 +258,8 @@ namespace EnumerablePrinter
                 return;
             }
 
-            keyToString ??= k => k.ToString() ?? "null";
-            valueToString ??= v => v.ToString() ?? "null";
+            keyToString ??= k => k?.ToString() ?? "null";
+            valueToString ??= v => v?.ToString() ?? "null";
 
             writer.Write("{ ");
             int i = 0;
