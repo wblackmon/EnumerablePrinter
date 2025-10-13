@@ -110,6 +110,7 @@ var complex = new Dictionary<string, object>
 complex.Print();
 // Output:
 // { Numbers: { 1, 2, 3 }, Matrix: { { 1, 2 }, { 3, 4 } } }// Output:
+
 ```
 
 ### ➤ With Custom Formatting
