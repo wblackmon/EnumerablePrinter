@@ -57,6 +57,13 @@ if ($Tag) {
     git push origin $Tag
 }
 
+if (-not $Deploy) {
+    $response = Read-Host "📤 Do you want to deploy this version now? (y/n)"
+    if ($response -match '^[Yy]') {
+        $Deploy = $true
+    }
+}
+
 if ($Deploy) {
     Write-Log "📤 Running deploy script..."
     .\deploy.ps1 -Version $Tag

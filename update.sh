@@ -42,6 +42,13 @@ if [ -n "$TAG" ]; then
   git push origin "$TAG"
 fi
 
+if [ "$DEPLOY" = "false" ]; then
+  read -p "📤 Do you want to deploy this version now? (y/n): " response
+  if [[ "$response" =~ ^[Yy] ]]; then
+    DEPLOY="true"
+  fi
+fi
+
 if [ "$DEPLOY" = "true" ]; then
   log "📤 Running deploy script..."
   ./deploy.ps1 -Version "$TAG"
