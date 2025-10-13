@@ -48,6 +48,15 @@ git add .
 Write-Log "📝 Committing: '$Message'"
 git commit -m $Message
 
+# Handle rebase if needed
+if (Test-Path ".git\rebase-merge") {
+    Write-Log "🔄 Rebase in progress. Attempting to continue..."
+    git rebase --continue
+}
+
+Write-Log "🔄 Rebasing from origin/main..."
+git pull --rebase origin main
+
 Write-Log "🚀 Pushing to origin/main..."
 git push origin main
 
@@ -56,17 +65,5 @@ if ($Tag) {
     git tag $Tag
     git push origin $Tag
 }
-
-# if (-not $Deploy) {
-#     $response = Read-Host "📤 Do you want to deploy this version now? (y/n)"
-#     if ($response -match '^[Yy]') {
-#         $Deploy = $true
-#     }
-# }
-
-# if ($Deploy) {
-#     Write-Log "📤 Running deploy script..."
-#     .\deploy.ps1 -Version $Tag
-# }
 
 Write-Log "✅ Update complete."
