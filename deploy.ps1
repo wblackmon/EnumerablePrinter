@@ -1,68 +1,60 @@
-param(
-    [string]$Version = "1.0.5",
-    [string]$ApiKey  = $env:NUGET_API_KEY,
-    [string]$CommitMessage = "Release $Version"
+param (
+    [string]$Version = "1.0.0",
+    [string]$ProjectPath = "src/EnumerablePrinter/EnumerablePrinter.csproj",
+    [string]$OutputDir = "nupkg"
 )
 
-$ErrorActionPreference = "Stop"
-
-$projectPath = "src/EnumerablePrinter/EnumerablePrinter.csproj"
-$packageDir  = "src/EnumerablePrinter/bin/Release"
-
-Write-Host "=== Checking in changes to Git ==="
-
-git add .
-
-$changes = git diff --cached --name-only
-if ($changes) {
-    git commit -m $CommitMessage
-    git push origin main
-} else {
-    Write-Host "No changes to commit."
+function Write-Log {
+    param([string]$Message)
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Write-Host "$timestamp - $Message"
 }
 
-$tag = "v$Version"
-if (-not (git tag -l $tag)) {
-    git tag $tag
-    git push origin $tag
-    Write-Host "Created and pushed tag $tag"
-} else {
-    Write-Host "Tag $tag already exists, skipping."
+function Ensure-NuGetApiKey {
+    if (-not $env:NUGET_API_KEY) {
+        throw "NUGET_API_KEY environment variable is not set."
+    }
 }
 
-Write-Host "=== Building and Packing EnumerablePrinter v$Version ==="
-
-dotnet clean $projectPath -c Release
-dotnet build $projectPath -c Release
-dotnet test tests/EnumerablePrinter.Tests/EnumerablePrinter.Tests.csproj -c Release
-
-dotnet pack $projectPath -c Release -p:PackageVersion=$Version -o $packageDir
-
-$package = Join-Path $packageDir "EnumerablePrinter.$Version.nupkg"
-$symbols = Join-Path $packageDir "EnumerablePrinter.$Version.snupkg"
-
-if (-not (Test-Path $package)) {
-    Write-Error "Package file not found: $package"
-    exit 1
+function Check-PackageExists {
+    $url = "https://api.nuget.org/v3-flatcontainer/enumerableprinter/$Version/enumerableprinter.$Version.nupkg"
+    try {
+        $response = Invoke-WebRequest -Uri $url -Method Head -UseBasicParsing
+        return $response.StatusCode -eq 200
+    } catch {
+        return $false
+    }
 }
 
-if (-not $ApiKey) {
-    Write-Error "NuGet API key is missing. Set NUGET_API_KEY environment variable or pass -ApiKey."
-    exit 1
+function Build-And-Pack {
+    Write-Log "Restoring project..."
+    dotnet restore $ProjectPath
+
+    Write-Log "Building project..."
+    dotnet build $ProjectPath -c Release
+
+    Write-Log "Running tests..."
+    dotnet test tests/EnumerablePrinter.Tests/EnumerablePrinter.Tests.csproj --no-build
+
+    Write-Log "Packing version $Version..."
+    dotnet pack $ProjectPath -c Release -o $OutputDir /p:PackageVersion=$Version
 }
 
-Write-Host "=== Pushing to NuGet.org ==="
-
-dotnet nuget push $package `
-    --api-key $ApiKey `
-    --source https://api.nuget.org/v3/index.json `
-    --skip-duplicate
-
-if (Test-Path $symbols) {
-    dotnet nuget push $symbols `
-        --api-key $ApiKey `
-        --source https://api.nuget.org/v3/index.json `
-        --skip-duplicate
+function Push-ToNuGet {
+    $packagePath = Get-ChildItem "$OutputDir\EnumerablePrinter.$Version.nupkg" -ErrorAction Stop
+    Write-Log "Pushing $($packagePath.Name) to NuGet..."
+    dotnet nuget push $packagePath.FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json
 }
 
-Write-Host "=== Deployment Complete ==="
+# Main
+Write-Log "Starting deploy for version $Version"
+Ensure-NuGetApiKey
+
+if (Check-PackageExists) {
+    Write-Log "Version $Version already exists on NuGet. Skipping push."
+    exit 0
+}
+
+Build-And-Pack
+Push-ToNuGet
+Write-Log "Deploy complete."

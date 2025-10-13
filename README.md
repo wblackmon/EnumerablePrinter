@@ -1,6 +1,10 @@
 # EnumerablePrinter
 
+<<<<<<< HEAD
 [![NuGet](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter/1.0.5)
+=======
+[![NuGet Build](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml/badge.svg)](https://github.com/wblackmon/EnumerablePrinter/actions/workflows/build.yml)
+>>>>>>> 93346f1 (Fix README.md)
 
 **Python-inspired LINQ extensions for expressive, ergonomic collection handling in C#.**
 
@@ -110,7 +114,7 @@ var complex = new Dictionary<string, object>
 complex.Print();
 // Output:
 // { Numbers: { 1, 2, 3 }, Matrix: { { 1, 2 }, { 3, 4 } } }// Output:
-// { { 1, 2 }, { 3, 4 } }
+
 ```
 
 ### ➤ With Custom Formatting
