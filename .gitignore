@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# DO NOT ADD SECRETS TO THE REPOSITORY!
+nuget.secret.ps1
+

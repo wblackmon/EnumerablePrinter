@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  Update script for EnumerablePrinter.
+  Gated check‑in script for EnumerablePrinter.
 
 .DESCRIPTION
   Runs build and test checks, commits changes, rebases, and pushes to main.
   Does NOT bump version, tag, or deploy. Version changes occur ONLY during deploy.
 
 .EXAMPLE
-  .\update.ps1 -Message "Fix README.md"
+  .\checkin.ps1 -Message "Fix README.md"
 
 .PARAMETER Message
   Commit message to use.
@@ -54,4 +54,4 @@ git pull --rebase origin main
 Write-Log "🚀 Pushing to origin/main..."
 git push origin main
 
-Write-Log "✅ Update complete (no version bump, no tag, no deploy)."
+Write-Log "✅ Check‑in complete (no version bump, no tag, no deploy)."

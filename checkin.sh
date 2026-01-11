@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # ┌────────────────────────────────────────────────────────────┐
-# │  EnumerablePrinter Update Script                           │
+# │  EnumerablePrinter Check‑In Script                         │
 # │                                                            │
 # │  Usage:                                                    │
-# │    ./update.sh "Fix bug"                                   │
+# │    ./checkin.sh "Fix bug"                                  │
 # │                                                            │
 # │  Args:                                                     │
 # │    $1 - Commit message (default: "Update EnumerablePrinter") │
@@ -33,4 +33,4 @@ git pull --rebase origin main
 log "🚀 Pushing to origin/main..."
 git push origin main
 
-log "✅ Update complete (no version bump, no tag, no deploy)."
+log "✅ Check‑in complete (no version bump)."

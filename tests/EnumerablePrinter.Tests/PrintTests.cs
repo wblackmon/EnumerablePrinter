@@ -46,14 +46,14 @@ namespace EnumerablePrinter.Tests
         public void Print_IntArray_PrintsElements()
         {
             var result = CaptureOutput(() => new[] { 1, 2, 3 }.Print());
-            Assert.Equal("{ 1, 2, 3 }\n", result);
+            Assert.Equal("[ 1, 2, 3 ]\n", result);
         }
 
         [Fact]
-        public void Print_EmptyEnumerable_PrintsEmptyBraces()
+        public void Print_EmptyEnumerable_PrintsEmptyBrackets()
         {
             var result = CaptureOutput(() => Enumerable.Empty<int>().Print());
-            Assert.Equal("{ }\n", result);
+            Assert.Equal("[ ]\n", result);
         }
 
         [Fact]
@@ -61,7 +61,7 @@ namespace EnumerablePrinter.Tests
         {
             var names = new List<string> { "Wayne", "Lucius", "Alfred" };
             var result = CaptureOutput(() => names.Print(n => $"[{n}]"));
-            Assert.Equal("{ [Wayne], [Lucius], [Alfred] }\n", result);
+            Assert.Equal("[ [Wayne], [Lucius], [Alfred] ]\n", result);
         }
 
         [Fact]
@@ -74,7 +74,7 @@ namespace EnumerablePrinter.Tests
             names.Print(n => n.ToUpper(), writer);
 
             var result = sb.ToString().Replace("\r\n", "\n");
-            Assert.Equal("{ WAYNE, LUCIUS, ALFRED }\n", result);
+            Assert.Equal("[ WAYNE, LUCIUS, ALFRED ]\n", result);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace EnumerablePrinter.Tests
         {
             var dict = new Dictionary<string, int> { ["Wayne"] = 1, ["Alfred"] = 2 };
             var result = CaptureOutput(() => dict.Print());
-            Assert.Equal("{ \"Wayne\": 1, \"Alfred\": 2 }\n", result);
+            Assert.Equal("[ \"Wayne\": 1, \"Alfred\": 2 ]\n", result);
         }
 
         [Fact]
@@ -90,7 +90,31 @@ namespace EnumerablePrinter.Tests
         {
             var matrix = new[] { new[] { 1, 2 }, new[] { 3, 4 } };
             var result = CaptureOutput(() => matrix.Print());
-            Assert.Equal("{ { 1, 2 }, { 3, 4 } }\n", result);
+            Assert.Equal("[ [ 1, 2 ], [ 3, 4 ] ]\n", result);
+        }
+
+        [Fact]
+        public void Print_PrintsObjectProperties()
+        {
+            var products = new List<Product>
+            {
+                new Product { id = "1", name = "Keyboard", description = "Mechanical" }
+            };
+
+            var writer = new StringWriter();
+            products.Print(writer: writer);
+            string output = writer.ToString();
+
+            Assert.Contains("id: 1", output);
+            Assert.Contains("name: Keyboard", output);
+            Assert.Contains("description: Mechanical", output);
         }
     }
+}
+
+public class Product
+{
+    public string? id { get; set; }
+    public string? name { get; set; }
+    public string? description { get; set; }
 }
