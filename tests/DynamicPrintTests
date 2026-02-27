@@ -1,0 +1,155 @@
+using System.Collections;
+using System.Text;
+
+namespace EnumerablePrinter.Tests
+{
+    public class DynamicPrintTests
+    {
+        private static string Capture(Action action)
+        {
+            var sb = new StringBuilder();
+            using var writer = new StringWriter(sb);
+            var original = Console.Out;
+            Console.SetOut(writer);
+            try { action(); }
+            finally { Console.SetOut(original); }
+            return sb.ToString().Replace("\r\n", "\n");
+        }
+
+        // -------------------------------------------------------------
+        // IDictionary (non-generic) support
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_NonGenericDictionary_PrintsCorrectly()
+        {
+            IDictionary dict = new Hashtable
+            {
+                ["Wayne"] = "Engineer",
+                ["Lucius"] = "CTO"
+            };
+
+            var result = Capture(() => dict.Print());
+
+            Assert.Equal("[ \"Wayne\": Engineer, \"Lucius\": CTO ]\n", result);
+        }
+
+        // -------------------------------------------------------------
+        // Nested dictionary inside dictionary
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_NestedDictionary_PrintsRecursively()
+        {
+            IDictionary inner = new Hashtable { ["A"] = 1, ["B"] = 2 };
+            IDictionary outer = new Hashtable { ["Inner"] = inner };
+
+            var result = Capture(() => outer.Print());
+
+            Assert.Equal("[ \"Inner\": [ \"A\": 1, \"B\": 2 ] ]\n", result);
+        }
+
+        // -------------------------------------------------------------
+        // IEnumerable<object> with mixed types
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_MixedEnumerable_PrintsAllTypes()
+        {
+            var list = new List<object?>
+            {
+                1,
+                "Wayne",
+                new [] { 2, 3 },
+                new Dictionary<string,int> { ["X"] = 9 }
+            };
+
+            var result = Capture(() => list.Print());
+
+            Assert.Equal("[ 1, \"Wayne\", [ 2, 3 ], [ \"X\": 9 ] ]\n", result);
+        }
+
+        // -------------------------------------------------------------
+        // Reflection-based object printing through Print(object)
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_Object_UsesReflection()
+        {
+            var p = new Product
+            {
+                id = "42",
+                name = "Gadget",
+                description = "Useful"
+            };
+
+            var result = Capture(() => p.Print());
+
+            Assert.Contains("id: 42", result);
+            Assert.Contains("name: Gadget", result);
+            Assert.Contains("description: Useful", result);
+        }
+
+        // -------------------------------------------------------------
+        // IEnumerable<object> containing objects → reflection fallback
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_EnumerableOfObjects_PrintsProperties()
+        {
+            var list = new List<object>
+            {
+                new Product { id = "1", name = "Keyboard", description = "Mechanical" },
+                new Product { id = "2", name = "Mouse", description = "Wireless" }
+            };
+
+            var result = Capture(() => list.Print());
+
+            Assert.Contains("id: 1", result);
+            Assert.Contains("name: Keyboard", result);
+            Assert.Contains("description: Mechanical", result);
+
+            Assert.Contains("id: 2", result);
+            Assert.Contains("name: Mouse", result);
+            Assert.Contains("description: Wireless", result);
+        }
+
+        // -------------------------------------------------------------
+        // Azure-style metadata dictionary (IDictionary<string,string>)
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_MetadataDictionary_PrintsCorrectly()
+        {
+            IDictionary<string, string> metadata = new Dictionary<string, string>
+            {
+                ["ViewedBy"] = "Wayne",
+                ["environment"] = "dev"
+            };
+
+            var result = Capture(() => metadata.Print());
+
+            Assert.Equal("[ \"ViewedBy\": Wayne, \"environment\": dev ]\n", result);
+        }
+
+        // -------------------------------------------------------------
+        // Print(object) should route IEnumerable<char> to string printer
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_Object_CharEnumerable_RoutesToStringPrinter()
+        {
+            object chars = new[] { 'H', 'i' };
+
+            var result = Capture(() => chars.Print());
+
+            Assert.Equal("\"Hi\"\n", result);
+        }
+
+        // -------------------------------------------------------------
+        // Print(object) should route byte[] to byte printer
+        // -------------------------------------------------------------
+        [Fact]
+        public void Print_Object_ByteArray_RoutesToBytePrinter()
+        {
+            object bytes = new byte[3];
+
+            var result = Capture(() => bytes.Print());
+
+            Assert.Equal("byte[3]\n", result);
+        }
+    }
+}

@@ -1,19 +1,27 @@
 ﻿using System.Collections;
-using System.ComponentModel.Design.Serialization;
-using System.Diagnostics.Metrics;
-using System.Runtime.InteropServices;
 using System.Reflection;
 
 namespace EnumerablePrinter
 {
     /// <summary>
-    /// Extension methods for printing IEnumerable collections, inspired by Python's print().
+    /// Provides extension methods for printing sequences, dictionaries, objects,
+    /// and nested structures in a readable, Python-inspired format.
     /// </summary>
     public static class EnumerableExtensions
     {
+        // =====================================================================
+        //  IEnumerable<T> Printer
+        // =====================================================================
+
         /// <summary>
-        /// Prints the contents of an IEnumerable using optional formatting and output stream.
+        /// Prints the contents of an <see cref="IEnumerable{T}"/> using optional
+        /// formatting and an optional output writer. Supports nested collections,
+        /// strings, primitives, and complex objects.
         /// </summary>
+        /// <typeparam name="T">Element type.</typeparam>
+        /// <param name="source">The sequence to print.</param>
+        /// <param name="toString">Optional formatter for each element.</param>
+        /// <param name="writer">Optional output writer (defaults to Console.Out).</param>
         public static void Print<T>(
             this IEnumerable<T>? source,
             Func<T, string>? toString = null,
@@ -27,7 +35,7 @@ namespace EnumerablePrinter
                 return;
             }
 
-            // Special case: char sequences → print as a string literal
+            // Special case: treat IEnumerable<char> as a string literal
             if (source is IEnumerable<char> chars)
             {
                 writer.WriteLine($"\"{new string(chars.ToArray())}\"");
@@ -61,7 +69,7 @@ namespace EnumerablePrinter
                     PrintNested(nested, sw);
                     text = sw.ToString().Trim();
                 }
-                // Complex objects → print properties
+                // Complex objects → reflect properties
                 else if (element is not null &&
                          !element.GetType().IsPrimitive &&
                          element is not string &&
@@ -88,7 +96,7 @@ namespace EnumerablePrinter
                 }
                 else
                 {
-                    text = (toString ?? (x => x?.ToString() ?? "null"))((T)element!);
+                    text = toString((T)element!);
                 }
 
                 writer.Write(text);
@@ -99,6 +107,9 @@ namespace EnumerablePrinter
             writer.WriteLine(" ]");
         }
 
+        /// <summary>
+        /// Prints a nested <see cref="IEnumerable"/> recursively.
+        /// </summary>
         private static void PrintNested(IEnumerable nested, TextWriter writer)
         {
             var items = new List<object?>();
@@ -134,8 +145,12 @@ namespace EnumerablePrinter
             writer.Write(" ]");
         }
 
+        // =====================================================================
+        //  Utility Extensions
+        // =====================================================================
+
         /// <summary>
-        /// Determines whether the elements in the sequence are sorted alphabetically.
+        /// Determines whether the sequence is sorted alphabetically using a selector.
         /// </summary>
         public static bool IsAlphabetical<T>(this IEnumerable<T> source, Func<T, string> selector, IComparer<string>? comparer = null)
         {
@@ -159,7 +174,7 @@ namespace EnumerablePrinter
         }
 
         /// <summary>
-        /// Python-style slice.
+        /// Performs Python-style slicing on a sequence.
         /// </summary>
         public static IEnumerable<T> Slice<T>(
             this IEnumerable<T> source,
@@ -189,12 +204,18 @@ namespace EnumerablePrinter
                 yield return list[i];
         }
 
+        /// <summary>
+        /// Prints a string as a quoted literal.
+        /// </summary>
         public static void Print(this string? s, TextWriter? writer = null)
         {
             writer ??= Console.Out;
             writer.WriteLine(s == null ? "null" : $"\"{s}\"");
         }
 
+        /// <summary>
+        /// Prints a byte array as a length descriptor.
+        /// </summary>
         public static void Print(this byte[]? bytes, TextWriter? writer = null)
         {
             writer ??= Console.Out;
@@ -207,7 +228,7 @@ namespace EnumerablePrinter
         }
 
         /// <summary>
-        /// Dictionary printing (square brackets).
+        /// Prints a dictionary using square-bracket formatting.
         /// </summary>
         public static void Print<TKey, TValue>(
             this IDictionary<TKey, TValue> dictionary,
@@ -245,7 +266,7 @@ namespace EnumerablePrinter
         }
 
         /// <summary>
-        /// Chunk implementation.
+        /// Splits a sequence into fixed-size chunks.
         /// </summary>
         public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T>? source, int size)
         {
@@ -269,6 +290,193 @@ namespace EnumerablePrinter
 
                 yield return chunk;
             }
+        }
+
+        // =====================================================================
+        //  Dynamic Printer (Universal Entry Point)
+        // =====================================================================
+
+        /// <summary>
+        /// Prints any object by dynamically selecting the appropriate printer:
+        /// string, byte array, dictionary, enumerable, or reflection-based object printer.
+        /// </summary>
+        public static void Print(this object? obj, TextWriter? writer = null)
+        {
+            PrintDynamic(obj, writer ?? Console.Out);
+        }
+
+        /// <summary>
+        /// Routes an object to the correct printer based on implemented interfaces.
+        /// </summary>
+        private static void PrintDynamic(object? obj, TextWriter writer)
+        {
+            switch (obj)
+            {
+                case null:
+                    writer.WriteLine("null");
+                    return;
+
+                case string s:
+                    s.Print(writer);
+                    return;
+
+                case byte[] bytes:
+                    bytes.Print(writer);
+                    return;
+
+                case IDictionary dict:
+                    PrintDictionaryDynamic(dict, writer);
+                    return;
+
+                case IEnumerable enumerable when obj is not string:
+                    PrintEnumerableDynamic(enumerable, writer);
+                    return;
+
+                default:
+                    PrintObjectDynamic(obj, writer);
+                    return;
+            }
+        }
+
+        /// <summary>
+        /// Prints any <see cref="IDictionary"/> dynamically, supporting nested dictionaries
+        /// and nested enumerables.
+        /// </summary>
+        private static void PrintDictionaryDynamic(IDictionary dict, TextWriter writer)
+        {
+            if (dict.Count == 0)
+            {
+                writer.WriteLine("[ ]");
+                return;
+            }
+
+            writer.Write("[ ");
+
+            int i = 0;
+            foreach (DictionaryEntry entry in dict)
+            {
+                writer.Write($"\"{entry.Key}\": ");
+
+                if (entry.Value is IDictionary nestedDict)
+                {
+                    PrintDictionaryDynamic(nestedDict, writer);
+                }
+                else if (entry.Value is IEnumerable nested && entry.Value is not string)
+                {
+                    PrintEnumerableDynamic(nested, writer);
+                }
+                else
+                {
+                    writer.Write(entry.Value?.ToString() ?? "null");
+                }
+
+                if (i < dict.Count - 1)
+                    writer.Write(", ");
+
+                i++;
+            }
+
+            writer.WriteLine(" ]");
+        }
+
+        /// <summary>
+        /// Prints any <see cref="IEnumerable"/> dynamically, supporting nested collections,
+        /// dictionaries, and primitive values.
+        /// </summary>
+        private static void PrintEnumerableDynamic(IEnumerable source, TextWriter writer)
+        {
+            var items = source.Cast<object?>().ToList();
+
+            if (items.Count == 0)
+            {
+                writer.WriteLine("[ ]");
+                return;
+            }
+
+            writer.Write("[ ");
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                var element = items[i];
+
+                switch (element)
+                {
+                    case null:
+                        writer.Write("null");
+                        break;
+
+                    case string s:
+                        writer.Write($"\"{s}\"");
+                        break;
+
+                    case IDictionary dict:
+                        PrintDictionaryDynamic(dict, writer);
+                        break;
+
+                    case IEnumerable nested when element is not string:
+                        PrintEnumerableDynamic(nested, writer);
+                        break;
+
+                    default:
+                        writer.Write(element.ToString());
+                        break;
+                }
+
+                if (i < items.Count - 1)
+                    writer.Write(", ");
+            }
+
+            writer.Write(" ]");
+        }
+
+        /// <summary>
+        /// Prints a complex object by reflecting its public instance properties.
+        /// Supports nested dictionaries and nested enumerables.
+        /// </summary>
+        private static void PrintObjectDynamic(object obj, TextWriter writer)
+        {
+            var type = obj.GetType();
+            var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            if (props.Length == 0)
+            {
+                writer.WriteLine(obj.ToString());
+                return;
+            }
+
+            writer.Write("{ ");
+
+            for (int i = 0; i < props.Length; i++)
+            {
+                var p = props[i];
+                var value = p.GetValue(obj);
+
+                writer.Write($"{p.Name}: ");
+
+                switch (value)
+                {
+                    case null:
+                        writer.Write("null");
+                        break;
+
+                    case IDictionary dict:
+                        PrintDictionaryDynamic(dict, writer);
+                        break;
+
+                    case IEnumerable enumerable when value is not string:
+                        PrintEnumerableDynamic(enumerable, writer);
+                        break;
+
+                    default:
+                        writer.Write(value.ToString());
+                        break;
+                }
+
+                if (i < props.Length - 1)
+                    writer.Write(", ");
+            }
+
+            writer.WriteLine(" }");
         }
     }
 }
