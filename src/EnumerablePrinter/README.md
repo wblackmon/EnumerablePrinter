@@ -2,35 +2,30 @@
 
 [![NuGet Version](https://img.shields.io/nuget/v/EnumerablePrinter.svg)](https://www.nuget.org/packages/EnumerablePrinter)
 
-**Python‑inspired LINQ extensions for expressive, ergonomic collection handling in C#.**
+**A focused, reflection‑aware object printer for .NET.**
 
-EnumerablePrinter brings the clarity and power of Python’s sequence operations to C#, with intuitive methods like `Slice`, `Print`, `Chunk`, and `IsAlphabetical`. Designed for developer ergonomics, deferred execution, and clean diagnostics.
+EnumerablePrinter is a lightweight formatting library designed to make debugging and diagnostics easier. It prints collections, dictionaries, nested structures, and objects with consistent, readable output without adding duplicate LINQ helpers that already exist in the .NET framework.
 
 ---
 
 ## ✨ Latest Updates
 
-- **Unified Square‑Bracket Formatting** – All collections now print using `[ ... ]` for a clean, modern, JSON‑adjacent style.
-- **Object Property Printing** – Complex objects print their public properties automatically using a reflection‑based printer.
-- **Dictionary Improvements** – Key/value pairs print inline with consistent bracket formatting.
-- **Nested Collection Support** – Recursively prints arrays, lists, sets, and dictionaries with stable, predictable formatting.
-- **Char Enumerable Special Case** – `IEnumerable<char>` prints as a string literal instead of a character list.
-- **Custom Formatting** – User‑provided delegates are respected for all element types, including strings.
-- **Output Redirection** – Print to any `TextWriter` (console, file, buffer, logger).
-- **Chunk Support** – Split sequences into fixed‑size groups with lazy evaluation.
-- **CRLF/LF Stability** – All scripts and examples normalized to LF for cross‑platform reliability.
-- **Automated Versioning** – Repository scripts now auto‑increment semantic versions with cascading rollover.
+- **Major Rearchitecture** – The library was rewritten around a single formatter pipeline focused on printing.
+- **Removed Duplicate .NET Features** – `Slice`, `Chunk`, and `IsAlphabetical` were removed because their functionality already exists in the framework.
+- **Unified Square‑Bracket Formatting** – Collections render with a consistent `[ ... ]` style.
+- **Object Property Printing** – Complex objects print their public properties automatically using reflection.
+- **Dictionary Improvements** – Key/value pairs print inline with stable formatting.
+- **Nested Collection Support** – Arrays, lists, sets, and dictionaries print recursively.
+- **Char Enumerable Special Case** – `IEnumerable<char>` renders as a quoted string literal.
+- **Output Redirection** – Print to any `TextWriter` such as the console, file, or in-memory buffer.
 
 ---
 
-## ✨ Features
+## ✨ Core Capability
 
-| Method             | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| `Print()`          | Pretty‑print any `IEnumerable<T>` to console or `TextWriter` |
-| `IsAlphabetical()` | Check if a sequence is sorted alphabetically                 |
-| `Slice()`          | Extract a subsequence like Python’s `[start:end:step]`       |
-| `Chunk()`          | Split a sequence into fixed‑size chunks                      |
+| API | Description |
+| --- | ----------- |
+| `Print()` | Pretty‑print any object, collection, dictionary, or nested structure to the console or a `TextWriter` |
 
 ---
 

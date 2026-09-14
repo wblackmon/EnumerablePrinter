@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Launch (No Debug Echo)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/samples/EnumerablePrinter.Demo/bin/Debug/net8.0/EnumerablePrinter.Demo.dll",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}

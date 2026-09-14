@@ -1,70 +1,54 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## Major Rewrite and API Cleanup
 
-The format is based on Keep a Changelog  
-and this project adheres to Semantic Versioning.
+The library has been completely rearchitected and recoded around a single responsibility: printing objects and collections clearly for debugging and diagnostics.
 
-## [Unreleased]
+The previous implementation mixed printer behavior with convenience LINQ-style helpers. That broad scope was removed in favor of a leaner, more maintainable design focused on formatting and readability.
 
-## [1.4.0] - 2026-02-27
+### Removed Features That Duplicated the .NET Framework
 
-### Added
+The following APIs were removed because they duplicated functionality already available in the BCL and did not belong in a library whose core purpose is printing:
 
-- Dynamic interface‑based printing via `Print(object)` with automatic routing for:
-  - `IDictionary`
-  - `IDictionary<TKey, TValue>`
-  - `IEnumerable`
-  - `IEnumerable<T>`
-  - Reflection‑based object printing
-- Full recursive printing for nested dictionaries and nested enumerables.
-- Special‑case handling for:
-  - `IEnumerable<char>` → prints as a string literal
-  - `byte[]` → prints as a length descriptor
-- New README examples demonstrating interface‑based printing.
-- XML documentation comments for all public APIs.
-- Expanded test suite covering:
-  - Non‑generic dictionaries
-  - Mixed‑type enumerables
-  - Reflection fallback
-  - Azure‑style metadata dictionaries
-  - Nested dictionary/collection combinations
+- `Slice(...)`
+- `Chunk(...)`
+- `IsAlphabetical(...)`
 
-### Changed
+#### `Slice(...)`
 
-- Unified printing behavior across all entry points (`Print<T>`, `Print(object)`, dictionary printers).
-- Improved consistency of square‑bracket formatting for all collection types.
-- Normalized all output to LF for cross‑platform stability.
+This API duplicated common .NET sequence operations such as `Skip(...)`, `Take(...)`, `Where(...)`, and range-based filtering. Standard LINQ already provides the idiomatic mechanism for slicing and filtering sequences.
 
-### Fixed
+#### `Chunk(...)`
 
-- Incorrect handling of nested collections inside `IEnumerable<T>`.
-- Edge case where complex objects inside lists were not printed using property reflection.
-- Dictionary printing inconsistencies when using non‑generic `IDictionary`.
+Starting with .NET 6, the framework includes `Enumerable.Chunk(int size)`. Keeping a custom implementation would only duplicate a built-in API and create confusion for developers.
 
-## [1.3.0] - 2026-01-15
+#### `IsAlphabetical(...)`
 
-### Added
+This convenience method was simply a thin wrapper over LINQ patterns like `OrderBy(...)` and `SequenceEqual(...)`. It added surface area without providing unique value.
 
-- Reflection‑based property printing for complex objects.
-- Improved nested collection formatting.
-- Support for custom element formatting delegates.
+---
 
-## [1.2.0] - 2025-12-10
+## Post-Review Cleanup
 
-### Added
+Following a focused code review, the remaining polish items were addressed to make the library easier to use and easier to maintain:
 
-- `Chunk()` extension for splitting sequences into fixed‑size groups.
-- `IsAlphabetical()` extension for alphabetical ordering checks.
+- corrected the `Abstractions` namespace naming typo
+- added an explicit `PrintToConsole()` API for clarity and discoverability
+- streamlined the formatter’s type-dispatch logic into clearer helper methods
+- added regression tests for console output and circular-reference handling
 
-## [1.1.0] - 2025-11-01
+These changes keep the library aligned with its purpose as a single-purpose debug-printing utility without reintroducing redundant framework functionality.
 
-### Added
+---
 
-- Python‑style `Slice()` extension.
+### Why the Rewrite Was Necessary
 
-## [1.0.0] - 2025-10-01
+This cleanup was done to:
 
-### Added
+- remove redundant APIs that already exist in .NET
+- reduce maintenance and complexity
+- avoid shadowing built-in framework methods
+- keep the library focused on its real purpose: a clean, predictable object printer
+- simplify the architecture around a single formatter and a small public surface
 
-- Initial release with basic `Print<T>` support.
+The project is now a focused, single-purpose dynamic printer with no redundant LINQ helper APIs.

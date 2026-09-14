@@ -8,9 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -18,10 +24,14 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore
-        run: dotnet restore
+        run: |
+          dotnet restore src/EnumerablePrinter/EnumerablePrinter.csproj
+          dotnet restore tests/EnumerablePrinter.Tests/EnumerablePrinter.Tests.csproj
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: |
+          dotnet build src/EnumerablePrinter/EnumerablePrinter.csproj --configuration Release --no-restore
+          dotnet build tests/EnumerablePrinter.Tests/EnumerablePrinter.Tests.csproj --configuration Release --no-restore
 
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test tests/EnumerablePrinter.Tests/EnumerablePrinter.Tests.csproj --no-build --verbosity normal
