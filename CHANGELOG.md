@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0 - Optional Sequence Slicing
+
+- added the separate `EnumerablePrinter.Linq` project for sequence extensions
+- added `Slice<T>(start, end, step)` for `IEnumerable<T>` values
+- added positive-index and step slicing with deferred execution
+- added negative-index support by buffering the source when required
+- added demo coverage and regression tests for integer, string, character, and custom-object sequences
+
+The core `EnumerablePrinter` package remains focused on formatting and printing. Sequence slicing is provided as an optional project so it can be used alongside the printer without expanding the core API.
+
+---
+
 ## Major Rewrite and API Cleanup
 
 The library has been completely rearchitected and recoded around a single responsibility: printing objects and collections clearly for debugging and diagnostics.

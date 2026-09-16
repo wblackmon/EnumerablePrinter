@@ -29,6 +29,38 @@ This makes the library easier to understand, easier to maintain, and better alig
 - prevents circular-reference recursion from causing runaway output
 - supports console output or any `TextWriter`
 - keeps the public API intentionally small and focused
+- includes optional Python-style slicing through the separate `EnumerablePrinter.Linq` project
+
+## Optional sequence slicing
+
+The `EnumerablePrinter.Linq` project adds a focused `Slice()` extension for `IEnumerable<T>` values. It supports optional `start`, `end`, and positive `step` parameters, including negative indices.
+
+Reference the project alongside `EnumerablePrinter`:
+
+```xml
+<ProjectReference Include="..\..\src\EnumerablePrinter.Linq\EnumerablePrinter.Linq.csproj" />
+```
+
+Then use it with the printer:
+
+```csharp
+using EnumerablePrinter.Extensions;
+using EnumerablePrinter.Linq;
+
+var numbers = new[] { 10, 20, 30, 40, 50, 60 };
+
+numbers.Slice(start: 1, end: 4).Print();
+// [20, 30, 40]
+
+numbers.Slice(step: 2).Print();
+// [10, 30, 50]
+
+var fruits = new[] { "Apple", "Banana", "Cherry", "Date", "Elderberry" };
+fruits.Slice(start: -3).Print();
+// ["Cherry", "Date", "Elderberry"]
+```
+
+Positive-index slices stream from the source; slices using negative indices buffer the source so they can resolve positions from the end. `step` must be greater than zero.
 
 ---
 

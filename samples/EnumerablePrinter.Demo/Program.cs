@@ -1,5 +1,6 @@
 ﻿using EnumerablePrinter.Demo.Scenarios;
 using EnumerablePrinter.Extensions;
+using EnumerablePrinter.Linq;
 
 Console.WriteLine("=== Enumerable Printer Demo ===");
 Console.WriteLine();
@@ -14,6 +15,7 @@ DictionaryDemo.Run();
 NestedDemo.Run();
 ObjectDemo.Run();
 CustomOptionsDemo.Run();
+SliceDemo.Run();
 
 Console.WriteLine();
 Console.WriteLine("=== End of Demo ===");
