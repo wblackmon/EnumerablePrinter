@@ -7,8 +7,9 @@
 # │  NuGet.org. This script assumes the version has already    │
 # │  been bumped and tagged via the release script.            │
 # │                                                            │
-# │  Requires:                                                 │
+# │  Local publishing requires:                                │
 # │    - nuget.secret (git-ignored) OR $NUGET_API_KEY          │
+# │  GitHub Actions uses NuGet Trusted Publishing.             │
 # │                                                            │
 # │  Usage:                                                    │
 # │    ./deploy.sh                                             │
@@ -98,7 +99,7 @@ push_to_nuget() {
     return
   fi
 
-  log "📤 Pushing to NuGet..."
+  log "📤 Pushing to NuGet with API key..."
   dotnet nuget push "$package" \
     --api-key "$NUGET_API_KEY" \
     --source https://api.nuget.org/v3/index.json

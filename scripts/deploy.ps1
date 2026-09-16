@@ -5,7 +5,8 @@
 .DESCRIPTION
   Builds, tests, packs, and pushes the current package version to NuGet.
   This script assumes the project version has already been bumped and tagged
-  via the release script.
+    via the release script. Local publishing uses an API key; GitHub Actions
+    publishes through NuGet Trusted Publishing.
 
 .EXAMPLE
   .\deploy.ps1
@@ -71,7 +72,7 @@ function Push-ToNuGet($version) {
         return
     }
 
-    Write-Log "📤 Pushing to NuGet..."
+    Write-Log "📤 Pushing to NuGet with API key..."
     dotnet nuget push $packagePath.FullName `
         --api-key $env:NUGET_API_KEY `
         --source https://api.nuget.org/v3/index.json

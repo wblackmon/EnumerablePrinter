@@ -5,23 +5,23 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter", "src\EnumerablePrinter\EnumerablePrinter.csproj", "{E6A4578B-CEB7-419E-926E-48CE82FA7575}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter", "src\EnumerablePrinter\EnumerablePrinter.csproj", "{E6A4578B-CEB7-419E-926E-48CE82FA7575}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter.Tests", "tests\EnumerablePrinter.Tests\EnumerablePrinter.Tests.csproj", "{755E94B9-AFB3-42B7-868B-E548BC599A99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter.Tests", "tests\EnumerablePrinter.Tests\EnumerablePrinter.Tests.csproj", "{755E94B9-AFB3-42B7-868B-E548BC599A99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter.Linq", "src\EnumerablePrinter.Linq\EnumerablePrinter.Linq.csproj", "{1A89B65A-7BEA-4679-B1FA-626FD3305E95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter.Linq", "src\EnumerablePrinter.Linq\EnumerablePrinter.Linq.csproj", "{1A89B65A-7BEA-4679-B1FA-626FD3305E95}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter.Analyzers", "src\EnumerablePrinter.Analyzers\EnumerablePrinter.Analyzers.csproj", "{84D5C748-8397-4FB2-8E4A-B592BEB52A73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter.Analyzers", "src\EnumerablePrinter.Analyzers\EnumerablePrinter.Analyzers.csproj", "{84D5C748-8397-4FB2-8E4A-B592BEB52A73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter.Linq.Tests", "tests\EnumerablePrinter.Linq.Tests\EnumerablePrinter.Linq.Tests.csproj", "{FEF72139-C91B-461B-8A04-C78CB1B75D5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter.Linq.Tests", "tests\EnumerablePrinter.Linq.Tests\EnumerablePrinter.Linq.Tests.csproj", "{FEF72139-C91B-461B-8A04-C78CB1B75D5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter.Analyzers.Tests", "tests\EnumerablePrinter.Analyzers.Tests\EnumerablePrinter.Analyzers.Tests.csproj", "{42A12963-2184-464D-9D29-DED201B66134}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter.Analyzers.Tests", "tests\EnumerablePrinter.Analyzers.Tests\EnumerablePrinter.Analyzers.Tests.csproj", "{42A12963-2184-464D-9D29-DED201B66134}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{66320409-64EC-F7C5-3DEF-65E7510DAAD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EnumerablePrinter.Benchmarks", "benchmarks\EnumerablePrinter.Benchmarks\EnumerablePrinter.Benchmarks.csproj", "{6C87F6F1-CF02-4803-83C3-78CA618255F7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EnumerablePrinter.Benchmarks", "benchmarks\EnumerablePrinter.Benchmarks\EnumerablePrinter.Benchmarks.csproj", "{6C87F6F1-CF02-4803-83C3-78CA618255F7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
