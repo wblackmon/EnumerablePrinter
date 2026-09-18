@@ -10,6 +10,12 @@
 
 The core `EnumerablePrinter` package remains focused on formatting and printing. Sequence slicing is provided as an optional project so it can be used alongside the printer without expanding the core API.
 
+### Analyzer support
+
+- added the separate `EnumerablePrinter.Analyzers` project targeting `netstandard2.0`
+- added diagnostic `EP0001` for calls to `EnumerablePrinter.Extensions.PrintExtensions.Print`
+- added analyzer tests covering the supported `Print()` extension and unrelated extension methods
+
 ---
 
 ## Major Rewrite and API Cleanup

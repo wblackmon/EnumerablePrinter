@@ -30,6 +30,7 @@ This makes the library easier to understand, easier to maintain, and better alig
 - supports console output or any `TextWriter`
 - keeps the public API intentionally small and focused
 - includes optional Python-style slicing through the separate `EnumerablePrinter.Linq` project
+- includes a separate Roslyn analyzer project for flagging `Print()` calls in performance-sensitive code
 
 ## Optional sequence slicing
 
@@ -69,6 +70,12 @@ Positive-index slices stream from the source; slices using negative indices buff
 ```bash
 dotnet add package EnumerablePrinter
 ```
+
+## Roslyn analyzer
+
+The repository also contains `EnumerablePrinter.Analyzers`, a separate `netstandard2.0` Roslyn analyzer project. It defines diagnostic `EP0001`, which reports calls to `EnumerablePrinter.Extensions.PrintExtensions.Print` and suggests explicit formatting or logging instead.
+
+The analyzer is maintained separately from the core `EnumerablePrinter` package. To use it from a local checkout, add a project reference to `src/EnumerablePrinter.Analyzers/EnumerablePrinter.Analyzers.csproj` in the consuming project.
 
 ---
 
