@@ -7,7 +7,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace EnumerablePrinter.Analyzers.Tests;
 
 [TestClass]
-public sealed class PrintMethodAnalyzerTests
+public sealed class PrintRuleTests
 {
     [TestMethod]
     public void ReportsPrintExtension()
