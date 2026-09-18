@@ -3,15 +3,16 @@ name: Publish EnumerablePrinter
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   publish:
-    runs-on: windows-latest
-
-    permissions:
-      id-token: write
-      contents: read
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -29,12 +30,12 @@ jobs:
         run: dotnet build EnumerablePrinter.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test tests/EnumerablePrinter.Tests/EnumerablePrinter.Tests.csproj -c Release --no-build --no-restore
+        run: dotnet test EnumerablePrinter.sln -c Release --no-build --no-restore
 
       - name: Pack
         run: dotnet pack src/EnumerablePrinter/EnumerablePrinter.csproj -c Release --no-build -o ./nupkg
 
-      - name: Publish to NuGet with Trusted Publishing
+      - name: Publish to NuGet
         uses: NuGet/actions/publish@v1
         with:
           package: ./nupkg/*.nupkg
