@@ -42,4 +42,11 @@ jobs:
           user: wblackmon
 
       - name: Publish to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v2/package
+
+      - name: Verify NuGet package
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          package_url="https://api.nuget.org/v3-flatcontainer/enumerableprinter/${version}/enumerableprinter.${version}.nupkg"
+          curl --fail --location --retry 12 --retry-delay 5 --retry-all-errors --head "$package_url"
