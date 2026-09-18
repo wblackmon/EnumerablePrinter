@@ -20,10 +20,15 @@
 
     BEHAVIOR:
         - Deterministic versioning
+        - Full solution validation before changing git state
         - Workspace-local operations only
         - Silent, idempotent git commands
         - VERSION file is authoritative
-        - No global environment pollution
+        - No NuGet credentials or package publishing
+
+    TRUSTED PUBLISHING:
+        Check-in pushes source changes only. Run release.ps1 afterward to create
+        and push a v*.*.* tag, which triggers GitHub Actions NuGet publishing.
 #>
 
 param(
@@ -40,6 +45,21 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $root
+
+# ---------------------------
+# Validation before mutation
+# ---------------------------
+Write-Host "Running solution build..."
+dotnet build .\EnumerablePrinter.sln --nologo --verbosity quiet
+if ($LASTEXITCODE -ne 0) {
+    throw "Solution build failed. No changes were committed or pushed."
+}
+
+Write-Host "Running solution tests..."
+dotnet test .\EnumerablePrinter.sln --no-build --nologo --verbosity quiet
+if ($LASTEXITCODE -ne 0) {
+    throw "Solution tests failed. No changes were committed or pushed."
+}
 
 # ---------------------------
 # Version file
@@ -102,3 +122,4 @@ git commit -m $commitMessage
 git push
 
 Write-Host "Check-in complete: $newVersion ($Type)"
+Write-Host "Trusted publishing is not triggered by a branch push. Run .\scripts\release.ps1 to create and push the release tag."
