@@ -1,8 +1,8 @@
-# Proposal: System.Linq.SequenceExtensions — Slicing & Sequence Utilities
+# Proposal: Sequence Slicing for LINQ
 
 ## Summary
 
-Introduce Python-style slicing and related sequence utilities for `IEnumerable<T>`, complementing existing `Span<T>`/`Range` slicing. Enables ergonomic, deferred, composable slicing for all LINQ sequences.
+Introduce Python-style slicing for `IEnumerable<T>`, complementing existing `Span<T>` and range-based indexing. The API would provide ergonomic, deferred, composable slicing for LINQ sequences.
 
 ## Motivation
 
@@ -20,19 +20,13 @@ Current alternatives (`Skip`, `Take`) are not expressive enough.
 ```csharp
 namespace System.Linq
 {
-    public static class SequenceExtensions
+    public static class Enumerable
     {
         public static IEnumerable<T> Slice<T>(
             this IEnumerable<T> source,
             int? start = null,
             int? end = null,
             int step = 1);
-
-        public static bool IsAlphabetical(this IEnumerable<char> source);
-
-        public static IEnumerable<IEnumerable<T>> Chunk<T>(
-            this IEnumerable<T> source,
-            int size);
     }
 }
 ```
@@ -57,13 +51,19 @@ var lastThree = numbers.Slice(-3, null);
 
 - Range
 - `Span<T>`
-- `Skip`/`Take`
+- `Skip`/`Take`, ranges, and `TakeLast`
 
 ## Risks
 
 - Deferred execution expectations
 - Hidden allocations
 - Negative indexing semantics
+
+## Scope and compatibility
+
+The current repository implements `Slice` in the separate `EnumerablePrinter.Linq` project as `EnumerablePrinter.Linq.SequenceExtensions`. The earlier proposal included `Chunk` and `IsAlphabetical`, but those APIs were removed because they duplicate existing .NET functionality and are not part of this proposal.
+
+Before a framework submission, the API name, namespace, negative-index semantics, allocation behavior, and interaction with existing LINQ APIs require review. A new BCL extension should also avoid creating ambiguous extension-method resolution with application libraries.
 
 ## Implementation Notes
 

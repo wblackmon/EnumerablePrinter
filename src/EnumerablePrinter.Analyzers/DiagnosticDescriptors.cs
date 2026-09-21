@@ -2,8 +2,14 @@
 
 namespace EnumerablePrinter.Analyzers
 {
+    /// <summary>
+    /// Diagnostic descriptors reported by the EnumerablePrinter analyzers.
+    /// </summary>
     public static class DiagnosticDescriptors
     {
+        /// <summary>
+        /// Reports calls to <c>Print()</c> because they may be unsuitable for performance-sensitive code.
+        /// </summary>
         public static readonly DiagnosticDescriptor PrintMethodRule =
             new DiagnosticDescriptor(
                 id: "EP0001",

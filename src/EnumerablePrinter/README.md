@@ -28,6 +28,8 @@ This makes the library easier to understand, easier to maintain, and better alig
 - handles `string`, `byte[]`, and `IEnumerable<char>` gracefully
 - prevents circular-reference recursion from causing runaway output
 - supports console output or any `TextWriter`
+- supports configurable output through `PrintOptions`
+- exposes `ObjectFormatter` for formatting without console output
 - keeps the public API intentionally small and focused
 - includes optional Python-style slicing through the separate `EnumerablePrinter.Linq` project
 
@@ -101,6 +103,43 @@ new[] { 1, 2, 3 }.PrintToConsole();
 ```
 
 This follows the same formatting path as `Print()`, but makes the console intent explicit.
+
+### Formatting without output
+
+Use `ObjectFormatter` when the formatted text should be returned or written by the caller:
+
+```csharp
+using EnumerablePrinter;
+
+var text = ObjectFormatter.Format(new[] { 1, 2, 3 });
+// [1, 2, 3]
+```
+
+### Configuring output
+
+Use `PrintOptions` when you need limits or readable multiline output. The default remains compact output for compatibility.
+
+```csharp
+using EnumerablePrinter.Abstractions;
+using EnumerablePrinter.Extensions;
+
+var report = new
+{
+    Title = "Inventory",
+    Items = new[] { "Keyboard", "Mouse", "Monitor" }
+};
+
+var options = new PrintOptions
+{
+    Pretty = true,
+    IndentSize = 4,
+    MaxItems = 10
+};
+
+report.Print(options: options);
+```
+
+`PrintOptions` also supports maximum recursion depth, optional null and private-member handling, and collection item limits. Pass the same options to `PrintToConsole(options)` when writing directly to the console.
 
 ---
 

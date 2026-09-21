@@ -1,4 +1,5 @@
-﻿using EnumerablePrinter.Extensions;
+﻿using EnumerablePrinter.Abstractions;
+using EnumerablePrinter.Extensions;
 namespace EnumerablePrinter.Demo.Scenarios;
 
 public static class CustomOptionsDemo
@@ -52,6 +53,25 @@ public static class CustomOptionsDemo
 
         wrapped.Print();
         // Output: {Display: "Product(Keyboard:Mechanical)"}
+
+        Console.WriteLine();
+
+        Console.WriteLine("=== PrintOptions Formatting ===");
+
+        var printOptions = new PrintOptions
+        {
+            Pretty = true,
+            IndentSize = 4,
+            MaxItems = 2
+        };
+
+        var report = new
+        {
+            Title = "Inventory",
+            Items = new[] { "Keyboard", "Mouse", "Monitor" }
+        };
+
+        report.Print(options: printOptions);
 
         Console.WriteLine();
 

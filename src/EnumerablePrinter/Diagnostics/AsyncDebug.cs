@@ -4,6 +4,9 @@ using System.Threading;
 
 namespace EnumerablePrinter.Diagnostics;
 
+/// <summary>
+/// Queues diagnostic messages for writing from a background worker.
+/// </summary>
 public static class AsyncDebug
 {
     private static readonly BlockingCollection<string> _queue = new();
@@ -23,11 +26,18 @@ public static class AsyncDebug
         _worker.Start();
     }
 
+    /// <summary>
+    /// Queues a message for diagnostic output.
+    /// </summary>
+    /// <param name="message">The message to write.</param>
     public static void Log(string message)
     {
         _queue.Add(message);
     }
 
+    /// <summary>
+    /// Completes the queue and waits for queued messages to be written.
+    /// </summary>
     public static void Stop()
     {
         _queue.CompleteAdding();

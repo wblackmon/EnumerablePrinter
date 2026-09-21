@@ -11,10 +11,10 @@ The scripts are intentionally split by responsibility so each action is easy to 
 
 ## PowerShell
 
-- `checkin.ps1` — build, test, commit, rebase, and push current changes
+- `../checkin.ps1` — build, test, commit, rebase, and push current changes
 - release.ps1 — bump the library version, update the project metadata, commit the version change, and create a git tag
 - deploy.ps1 — restore, build, run tests, pack, and publish locally to NuGet with an API key
-- show-folder-tree.ps1 — print a quick folder tree for repo inspection
+- `../show-folder-tree.ps1` — print a quick folder tree for repo inspection
 
 ## Bash
 

@@ -1,8 +1,8 @@
-# Proposal: System.Formatting.ObjectPrinter — Deterministic Object & Collection Formatting
+# Proposal: Object and Collection Formatting for .NET Diagnostics
 
 ## Summary
 
-Introduce a deterministic, reflection‑safe, allocation‑bounded formatting subsystem for objects, dictionaries, and collections. This API provides a readable, JSON‑adjacent diagnostic format suitable for logging, debugging, console output, and developer tooling.
+Introduce a small diagnostic formatter for objects, dictionaries, and collections. The API provides readable, JSON-adjacent text for logging, debugging, console output, and developer tooling without requiring callers to define a serializer model.
 
 ## Motivation
 
@@ -26,51 +26,66 @@ A lightweight, deterministic formatter fills this gap.
 ## Proposed API
 
 ```csharp
-namespace System.Formatting
+namespace System.Diagnostics
 {
-    public static class ObjectPrinter
+    public static class ObjectFormatter
     {
-        public static string Format(object? value, ObjectPrintOptions? options = null);
-        public static void Write(object? value, TextWriter writer, ObjectPrintOptions? options = null);
+        public static string Format(object? value, ObjectFormatOptions? options = null);
+        public static void Write(object? value, TextWriter writer, ObjectFormatOptions? options = null);
     }
 
-    public sealed class ObjectPrintOptions
+    public sealed class ObjectFormatOptions
     {
-        public int MaxDepth { get; set; } = 5;
-        public int MaxItems { get; set; } = 256;
-        public bool SingleLine { get; set; } = false;
+        public int MaxDepth { get; set; } = 50;
+        public int MaxItems { get; set; } = int.MaxValue;
+        public bool Pretty { get; set; } = false;
+        public int IndentSize { get; set; } = 2;
+        public bool IncludeNulls { get; set; } = true;
         public bool IncludePrivateFields { get; set; } = false;
-        public bool UseIndentedFormatting { get; set; } = true;
-        public IFormatProvider? FormatProvider { get; set; }
+        public bool IncludePrivateProperties { get; set; } = false;
+    }
+}
+
+namespace System.Diagnostics.Extensions
+{
+    public static class PrintExtensions
+    {
+        public static T Print<T>(
+            this T value,
+            TextWriter? writer = null,
+            ObjectFormatOptions? options = null);
+
+        public static T PrintToConsole<T>(
+            this T value,
+            ObjectFormatOptions? options = null);
     }
 }
 ```
+
+The formatter is the core API. The printing methods are optional extensions in a separate namespace so applications can opt in to console and writer convenience methods explicitly.
 
 ## Formatting Rules
 
 - Null → null
 - Strings → "text"
-- Primitives → culture‑aware formatting
+- Primitive values → their standard text representation
 - Enumerables → [ item1, item2, … ]
 - Dictionaries → { key: value, … }
-- Objects → { Property = Value, Field = Value }
-- Cycles → ↻
-- Depth limit → …
-- Max items → …
+- Objects → { Property: Value }
+- Cycles → `<Circular Reference>`
+- Depth limit → `<max depth>`
+- Max items → `<max items>`
 
-## Deterministic Ordering
+## Ordering
 
-- Properties sorted alphabetically
-- Fields sorted alphabetically
-- Dictionary keys sorted by string representation
+The initial implementation follows reflection and dictionary enumeration order. Deterministic ordering would require an explicit contract and should be evaluated separately rather than claimed as an inherent property of this API.
 
 ## Safety
 
 - Skip indexers
 - Skip getters that throw
 - Optional private field inclusion
-- No shared mutable state
-- Allocation‑bounded traversal
+- No shared mutable formatter state
 
 ## Alternatives Considered
 
@@ -86,4 +101,4 @@ namespace System.Formatting
 
 ## Implementation Notes
 
-The existing EnumerablePrinter implementation demonstrates feasibility and developer demand.
+The existing EnumerablePrinter implementation demonstrates feasibility and provides a reference implementation. The current package API is `EnumerablePrinter.Extensions.PrintExtensions` plus `EnumerablePrinter.Abstractions.PrintOptions`; any framework proposal should be treated as a new API design rather than a direct namespace transplant.

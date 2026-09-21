@@ -6,6 +6,9 @@ using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace EnumerablePrinter.Analyzers
 {
+    /// <summary>
+    /// Reports calls to the EnumerablePrinter <c>Print()</c> extension method.
+    /// </summary>
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class PrintMethodAnalyzer : DiagnosticAnalyzer
     {

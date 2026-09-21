@@ -5,36 +5,53 @@ using EnumerablePrinter.Abstractions;
 
 namespace EnumerablePrinter.Formatters;
 
+/// <summary>
+/// Formats objects, collections, dictionaries, and scalar values using the default printer rules.
+/// </summary>
 public sealed class DefaultObjectFormatter : IObjectFormatter
 {
-    private const int MaxDepth = 32;
-
-    public string Format(object? value)
+    /// <summary>
+    /// Formats a value without appending a newline.
+    /// </summary>
+    /// <param name="value">The value to format.</param>
+    /// <param name="options">The formatting options to apply.</param>
+    /// <returns>The formatted value.</returns>
+    public string Format(object? value, PrintOptions options)
     {
-        var writer = new StringWriter();
-        var active = new HashSet<object>(ReferenceEqualityComparer.Instance);
+        ArgumentNullException.ThrowIfNull(options);
 
-        WriteValue(value, writer, active, 0);
+        if (options.MaxDepth < 0)
+            throw new ArgumentOutOfRangeException(nameof(options.MaxDepth));
+        if (options.MaxItems < 0)
+            throw new ArgumentOutOfRangeException(nameof(options.MaxItems));
+        if (options.IndentSize < 0)
+            throw new ArgumentOutOfRangeException(nameof(options.IndentSize));
+
+        var writer = new StringWriter();
+        var activeReferences = new HashSet<object>(ReferenceEqualityComparer.Instance);
+
+        WriteValue(value, writer, options, activeReferences, depth: 0);
         return writer.ToString();
     }
 
-    private void WriteValue(object? value, TextWriter writer, HashSet<object> activeReferences, int depth)
+    private static void WriteValue(object? value, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
     {
-        if (depth > MaxDepth)
+        if (depth > options.MaxDepth)
         {
-            writer.Write("<Depth Limit>");
+            writer.Write("<max depth>");
             return;
         }
 
         if (value is null)
         {
-            writer.Write("null");
+            if (options.IncludeNulls)
+                writer.Write("null");
             return;
         }
 
         if (value is string s)
         {
-            WriteQuotedString(s, writer);
+            writer.Write($"\"{s}\"");
             return;
         }
 
@@ -46,13 +63,13 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
 
         if (value is IDictionary dictionary)
         {
-            WriteDictionary(dictionary, writer, activeReferences, depth);
+            WriteDictionary(dictionary, writer, options, activeReferences, depth);
             return;
         }
 
         if (value is IEnumerable enumerable && value is not string)
         {
-            WriteEnumerable(enumerable, writer, activeReferences, depth);
+            WriteEnumerable(enumerable, writer, options, activeReferences, depth);
             return;
         }
 
@@ -62,18 +79,12 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
             return;
         }
 
-        WriteObject(value, writer, activeReferences, depth);
-    }
-
-    private static void WriteQuotedString(string value, TextWriter writer)
-    {
-        writer.Write($"\"{value}\"");
+        WriteObject(value, writer, options, activeReferences, depth);
     }
 
     private static bool IsScalarValueType(object value)
     {
         return value is ValueType &&
-               value is not byte[] &&
                value is not int &&
                value is not long &&
                value is not short &&
@@ -84,32 +95,67 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
                value is not char;
     }
 
-    private void WriteEnumerable(IEnumerable source, TextWriter writer, HashSet<object> activeReferences, int depth)
+    private static void WriteEnumerable(IEnumerable seq, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
     {
-        if (!TryEnter(source, activeReferences, writer))
+        if (!TryEnter(seq, activeReferences, writer))
             return;
 
-        var items = source.Cast<object?>().ToList();
-        if (items.Count == 0)
+        var enumerator = seq.GetEnumerator();
+        try
         {
-            writer.Write("[ ]");
-            activeReferences.Remove(source);
-            return;
-        }
+            if (!enumerator.MoveNext())
+            {
+                writer.Write("[ ]");
+                return;
+            }
 
-        writer.Write("[");
-        for (var i = 0; i < items.Count; i++)
+            writer.Write("[");
+
+            bool first = true;
+            int count = 0;
+
+            do
+            {
+                var item = enumerator.Current;
+                if (item is not null || options.IncludeNulls)
+                {
+                    if (count++ >= options.MaxItems)
+                    {
+                        writer.Write(" <max items> ");
+                        break;
+                    }
+
+                    if (!first)
+                        writer.Write(", ");
+                    first = false;
+
+                    if (options.Pretty)
+                    {
+                        writer.WriteLine();
+                        writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+                    }
+
+                    WriteValue(item, writer, options, activeReferences, depth + 1);
+                }
+            }
+            while (enumerator.MoveNext());
+
+            if (options.Pretty && !first)
+            {
+                writer.WriteLine();
+                writer.Write(new string(' ', depth * options.IndentSize));
+            }
+
+            writer.Write("]");
+        }
+        finally
         {
-            WriteValue(items[i], writer, activeReferences, depth + 1);
-            if (i < items.Count - 1)
-                writer.Write(", ");
+            (enumerator as IDisposable)?.Dispose();
+            activeReferences.Remove(seq);
         }
-
-        writer.Write("]");
-        activeReferences.Remove(source);
     }
 
-    private void WriteDictionary(IDictionary dict, TextWriter writer, HashSet<object> activeReferences, int depth)
+    private static void WriteDictionary(IDictionary dict, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
     {
         if (!TryEnter(dict, activeReferences, writer))
             return;
@@ -122,24 +168,47 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         }
 
         writer.Write("{");
-        var index = 0;
+
+        bool first = true;
+        int count = 0;
 
         foreach (DictionaryEntry entry in dict)
         {
-            writer.Write($"\"{entry.Key}\": ");
-            WriteValue(entry.Value, writer, activeReferences, depth + 1);
+            if (entry.Value is null && !options.IncludeNulls)
+                continue;
 
-            if (index < dict.Count - 1)
+            if (count++ >= options.MaxItems)
+            {
+                writer.Write(" <max items> ");
+                break;
+            }
+
+            if (!first)
                 writer.Write(", ");
+            first = false;
 
-            index++;
+            if (options.Pretty)
+            {
+                writer.WriteLine();
+                writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+            }
+
+            WriteValue(entry.Key, writer, options, activeReferences, depth + 1);
+            writer.Write(": ");
+            WriteValue(entry.Value, writer, options, activeReferences, depth + 1);
+        }
+
+        if (options.Pretty && !first)
+        {
+            writer.WriteLine();
+            writer.Write(new string(' ', depth * options.IndentSize));
         }
 
         writer.Write("}");
         activeReferences.Remove(dict);
     }
 
-    private void WriteByteArray(byte[] bytes, TextWriter writer)
+    private static void WriteByteArray(byte[] bytes, TextWriter writer)
     {
         if (bytes.Length == 0)
         {
@@ -148,24 +217,35 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         }
 
         writer.Write("[");
-        for (var i = 0; i < bytes.Length; i++)
+        for (var index = 0; index < bytes.Length; index++)
         {
-            writer.Write(bytes[i]);
-            if (i < bytes.Length - 1)
+            writer.Write(bytes[index]);
+            if (index < bytes.Length - 1)
                 writer.Write(", ");
         }
         writer.Write("]");
     }
 
-    private void WriteObject(object obj, TextWriter writer, HashSet<object> activeReferences, int depth)
+    private static void WriteObject(object obj, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
     {
         if (!TryEnter(obj, activeReferences, writer))
             return;
 
         var type = obj.GetType();
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        if (properties.Length == 0)
+        var props = type.GetProperties(
+            BindingFlags.Public | BindingFlags.Instance |
+            (options.IncludePrivateProperties ? BindingFlags.NonPublic : 0))
+            .Where(property => property.GetIndexParameters().Length == 0)
+            .ToArray();
+
+        var fields = type.GetFields(
+            BindingFlags.Public | BindingFlags.Instance |
+            (options.IncludePrivateFields ? BindingFlags.NonPublic : 0))
+            .Where(field => !field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
+            .ToArray();
+
+        if (props.Length == 0 && fields.Length == 0)
         {
             writer.Write(obj.ToString());
             activeReferences.Remove(obj);
@@ -173,16 +253,57 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         }
 
         writer.Write("{");
-        for (var i = 0; i < properties.Length; i++)
+
+        bool first = true;
+
+        foreach (var p in props)
         {
-            var property = properties[i];
-            var value = property.GetValue(obj);
+            var val = SafeGet(() => p.GetValue(obj));
+            if (val is null && !options.IncludeNulls)
+                continue;
 
-            writer.Write($"{property.Name}: ");
-            WriteValue(value, writer, activeReferences, depth + 1);
-
-            if (i < properties.Length - 1)
+            if (!first)
                 writer.Write(", ");
+            first = false;
+
+            if (options.Pretty)
+            {
+                writer.WriteLine();
+                writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+            }
+
+            writer.Write(p.Name);
+            writer.Write(": ");
+
+            WriteValue(val, writer, options, activeReferences, depth + 1);
+        }
+
+        foreach (var f in fields)
+        {
+            var val = SafeGet(() => f.GetValue(obj));
+            if (val is null && !options.IncludeNulls)
+                continue;
+
+            if (!first)
+                writer.Write(", ");
+            first = false;
+
+            if (options.Pretty)
+            {
+                writer.WriteLine();
+                writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+            }
+
+            writer.Write(f.Name);
+            writer.Write(": ");
+
+            WriteValue(val, writer, options, activeReferences, depth + 1);
+        }
+
+        if (options.Pretty && !first)
+        {
+            writer.WriteLine();
+            writer.Write(new string(' ', depth * options.IndentSize));
         }
 
         writer.Write("}");
@@ -207,5 +328,11 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         public new bool Equals(object? x, object? y) => ReferenceEquals(x, y);
 
         public int GetHashCode(object obj) => RuntimeHelpers.GetHashCode(obj);
+    }
+
+    private static object? SafeGet(Func<object?> getter)
+    {
+        try { return getter(); }
+        catch { return "<error>"; }
     }
 }

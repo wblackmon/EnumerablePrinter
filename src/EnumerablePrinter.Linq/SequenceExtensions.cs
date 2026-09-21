@@ -1,7 +1,21 @@
 ﻿namespace EnumerablePrinter.Linq;
 
+/// <summary>
+/// Adds Python-style slicing to enumerable sequences.
+/// </summary>
 public static class SequenceExtensions
 {
+    /// <summary>
+    /// Returns the elements in the specified range using a positive step.
+    /// </summary>
+    /// <typeparam name="T">The element type.</typeparam>
+    /// <param name="source">The sequence to slice.</param>
+    /// <param name="start">The inclusive starting index, or the beginning when omitted.</param>
+    /// <param name="end">The exclusive ending index, or the end when omitted.</param>
+    /// <param name="step">The number of positions to advance between elements.</param>
+    /// <returns>A lazily evaluated sequence containing the selected elements.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="source"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="step"/> is not positive.</exception>
     public static IEnumerable<T> Slice<T>(this IEnumerable<T> source,
         int? start = null,
         int? end = null,

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0 - Configurable Print Options
+
+- added `PrintOptions` for controlling pretty output, indentation, recursion depth, collection limits, null handling, and private-member inclusion
+- added optional `PrintOptions` parameters to `Print()` and `PrintToConsole()` while preserving compact default output
+- added demo coverage and regression tests for configured formatting
+
+---
+
 ## 2.0.0 - Optional Sequence Slicing
 
 - added the separate `EnumerablePrinter.Linq` project for sequence extensions

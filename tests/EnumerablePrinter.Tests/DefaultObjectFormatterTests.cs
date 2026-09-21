@@ -1,5 +1,6 @@
 ﻿namespace EnumerablePrinter.Tests;
 
+using EnumerablePrinter;
 using EnumerablePrinter.Extensions;
 
 [TestClass]
@@ -48,5 +49,23 @@ public class DefaultObjectFormatterTests
         list.Print(text);
 
         Assert.AreEqual("[<Circular Reference>]\n", text.ToString().Replace("\r\n", "\n"));
+    }
+
+    [TestMethod]
+    public void ObjectFormatter_Format_DoesNotAppendNewline()
+    {
+        var result = ObjectFormatter.Format(new[] { 1, 2, 3 });
+
+        Assert.AreEqual("[1, 2, 3]", result);
+    }
+
+    [TestMethod]
+    public void ObjectFormatter_Write_WritesToProvidedWriter()
+    {
+        using var writer = new StringWriter();
+
+        ObjectFormatter.Write(new[] { 1, 2, 3 }, writer);
+
+        Assert.AreEqual("[1, 2, 3]", writer.ToString());
     }
 }

@@ -1,5 +1,6 @@
 ﻿namespace EnumerablePrinter.Tests;
 
+using EnumerablePrinter.Abstractions;
 using EnumerablePrinter.Extensions;
 using EnumerablePrinter.Diagnostics;
 
@@ -257,6 +258,69 @@ public class PrintExtensionsTests
 
         // Assert
         Assert.AreEqual("{\"self\": <Circular Reference>}\n", Output);
+    }
+
+    [TestMethod]
+    public void Print_OneShotEnumerable_DoesNotLoseFirstItem()
+    {
+        var values = new OneShotEnumerable(1, 2, 3);
+
+        values.Print();
+
+        Assert.AreEqual("[1, 2, 3]\n", Output);
+    }
+
+    [TestMethod]
+    public void Print_ExcludingNulls_OmitsNullPropertiesAndItems()
+    {
+        var value = new
+        {
+            Name = (string?)null,
+            Values = new string?[] { "present", null }
+        };
+
+        value.Print(options: new PrintOptions { IncludeNulls = false });
+
+        Assert.AreEqual("{Values: [\"present\"]}\n", Output);
+    }
+
+    [TestMethod]
+    public void Print_SkipsIndexerProperties()
+    {
+        var value = new IndexerObject();
+
+        value.Print();
+
+        Assert.AreEqual("{Name: \"value\"}\n", Output);
+    }
+
+    [TestMethod]
+    public void Print_InvalidOptions_ThrowsArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => 1.Print(options: new PrintOptions { MaxDepth = -1 }));
+        Assert.Throws<ArgumentOutOfRangeException>(() => 1.Print(options: new PrintOptions { MaxItems = -1 }));
+        Assert.Throws<ArgumentOutOfRangeException>(() => 1.Print(options: new PrintOptions { IndentSize = -1 }));
+    }
+
+    private sealed class IndexerObject
+    {
+        public string Name => "value";
+
+        public string this[int index] => index.ToString();
+    }
+
+    private sealed class OneShotEnumerable : IEnumerable<int>
+    {
+        private readonly IEnumerator<int> enumerator;
+
+        public OneShotEnumerable(params int[] values)
+        {
+            enumerator = ((IEnumerable<int>)values).GetEnumerator();
+        }
+
+        public IEnumerator<int> GetEnumerator() => enumerator;
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
 }
