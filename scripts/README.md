@@ -1,56 +1,94 @@
 # Scripts
 
-This folder contains the repository automation for the release and publishing workflow.
+Run repository scripts from the repository root unless a command below says otherwise.
 
-## Purpose
+## Script Reference
 
-The scripts are intentionally split by responsibility so each action is easy to understand and maintain:
+### Check in changes
 
-- release scripts handle versioning, git tagging, and branch release coordination
-- deploy scripts handle build, validation, packaging, and NuGet publication
-
-## PowerShell
-
-- `../checkin.ps1` — build, test, commit, rebase, and push current changes
-- release.ps1 — bump the library version, update the project metadata, commit the version change, and create a git tag
-- deploy.ps1 — restore, build, run tests, pack, and publish locally to NuGet with an API key
-- `../show-folder-tree.ps1` — print a quick folder tree for repo inspection
-
-## Bash
-
-- `../checkin.sh` — build, test, commit, rebase, and push current changes
-- release.sh — equivalent release flow for Unix-like environments
-- deploy.sh — equivalent local publish flow for Unix-like environments using an API key
-
-The check-in scripts accept a commit message and support a non-mutating dry run:
+PowerShell:
 
 ```powershell
-.\checkin.ps1 -Message "Update formatter" -DryRun
+.\checkin.ps1 -Message "Describe the change" -DryRun
+.\checkin.ps1 -Message "Describe the change"
+```
+
+Shell:
+
+```bash
+./checkin.sh --dry-run "Describe the change"
+./checkin.sh "Describe the change"
+```
+
+Both scripts build and test the core test project. Without `-DryRun` / `--dry-run`,
+they stage **all** working-tree changes, commit, rebase from `origin/main`, and push
+to `origin/main`. Review `git status` first; use dry-run to run checks without Git
+changes.
+
+### Prepare a release
+
+```powershell
+.\scripts\release.ps1 -DryRun
+.\scripts\release.ps1
 ```
 
 ```bash
-./checkin.sh --dry-run "Update formatter"
+./scripts/release.sh --dry-run
+./scripts/release.sh
 ```
 
-## Recommended flow
+Dry-run previews the next version without changing files or Git state. A real run
+bumps `VERSION` and the core project version, commits the version change, creates
+and pushes the version tag, and pushes `main`. It does not build, test, or publish.
+Run only when the working tree and branch are ready for a release.
 
-1. Update code and docs for the release.
-2. Run the release script to bump the version and create the tag.
-3. Push the release tag. GitHub Actions runs `publish.yml` and publishes to NuGet using Trusted Publishing.
-
-## Dry-run usage
-
-Both deploy scripts support a dry-run flag:
-
-```bash
-./deploy.sh --dry-run
-```
+### Build and publish locally
 
 ```powershell
-./deploy.ps1 --dry-run
+.\scripts\deploy.ps1 -DryRun
+.\scripts\deploy.ps1
 ```
 
-This runs the validation and packaging flow without pushing to NuGet.
+```bash
+./scripts/deploy.sh --dry-run
+./scripts/deploy.sh
+```
+
+Deploy restores, builds, tests, and packs the version in `VERSION`. A dry-run
+still performs validation and packaging but skips the NuGet push; it still
+requires credentials because the scripts check for the key before running.
+PowerShell accepts `NUGET_API_KEY` or `nuget.secret.ps1` containing
+`@{ NuGetApiKey = '...' }`. Bash accepts `NUGET_API_KEY` or `nuget.secret`
+containing `NuGetApiKey=...`. A deploy skips publishing if that version already
+exists on NuGet.
+
+### Inspect the folder tree
+
+```powershell
+.\show-folder-tree.ps1
+```
+
+Prints the repository tree while omitting generated folders such as `bin`, `obj`,
+`.vs`, and `TestResults`. Run it from the repository root.
+
+### Scaffold analyzer files
+
+```powershell
+.\scripts\dotnet-analyzer_scaffold.ps1
+```
+
+Bootstraps analyzer and analyzer-test source files, adds Roslyn test packages, and
+adds a project reference. This is a one-time scaffold helper, not a routine build
+script. The repository already has analyzer files and package references, so do
+not rerun it unless intentionally rebuilding that setup; inspect its changes
+before accepting them.
+
+## Recommended release flow
+
+1. Finish code and documentation changes; run tests and the `net472` compatibility smoke test.
+2. Run the release script's dry-run and review the proposed version.
+3. Run the release script when ready to commit and push the version/tag.
+4. GitHub Actions publishes the tag to NuGet through Trusted Publishing.
 
 ## Trusted publishing
 
@@ -63,3 +101,5 @@ The local deploy scripts do not use GitHub's OIDC identity. They continue to req
 - The version is read from the root VERSION file.
 - The package version is expected to already be set before deployment runs.
 - Release and deploy are intentionally separate so the publish step is not coupled to git release operations.
+- The release scripts default to updating `src/EnumerablePrinter/EnumerablePrinter.csproj`; PowerShell also accepts `-ProjectPath`.
+- The PowerShell deploy script accepts `-ProjectPath`, `-TestProjectPath`, and `-OutputDir` overrides.

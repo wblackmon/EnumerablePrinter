@@ -18,7 +18,8 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
     /// <returns>The formatted value.</returns>
     public string Format(object? value, PrintOptions options)
     {
-        ArgumentNullException.ThrowIfNull(options);
+        if (options is null)
+            throw new ArgumentNullException(nameof(options));
 
         if (options.MaxDepth < 0)
             throw new ArgumentOutOfRangeException(nameof(options.MaxDepth));

@@ -1,117 +1,49 @@
-# ObjectPrinter Formatting Specification
+# EnumerablePrinter Formatting Specification
 
-## Overview
+This document describes the formatting behavior provided by the current `EnumerablePrinter` implementation.
 
-This document defines the complete formatting rules for `System.Formatting.ObjectPrinter`.
+## Type handling
 
-## Goals
+- `null` is rendered as `null` when `PrintOptions.IncludeNulls` is enabled.
+- Strings are quoted.
+- `byte[]` values are rendered as numeric collections.
+- `IDictionary` values are rendered as key/value pairs.
+- Other `IEnumerable` values are rendered as collections.
+- Scalar values are rendered using their `ToString()` representation.
+- Other objects expose public instance properties and fields according to the configured options.
 
-- Deterministic output
-- Allocation-bounded traversal
-- Reflection-safe behavior
-- Culture-aware formatting
-- Human-readable structure
+## Output shape
 
----
-
-## 1. Type Classification
-
-### Primitive Types
-
-- bool, byte, sbyte, short, ushort, int, uint, long, ulong
-- float, double, decimal
-- char
-- DateTime, DateTimeOffset, TimeSpan, Guid
-
-Formatted using the provided `IFormatProvider` when available.
-
-### Strings
-
-Always wrapped in quotes:
+Compact collections use square brackets:
 
 ```text
-"hello world"
+[1, 2, 3]
 ```
 
-### Enumerables
-
-Formatted as:
+Dictionaries use braces and a colon between each key and value:
 
 ```text
-[ item1, item2, item3 ]
+{"One": 1, "Two": 2}
 ```
 
-### Dictionaries
-
-Formatted as:
+Objects use property or field names followed by a colon:
 
 ```text
-{ key1: value1, key2: value2 }
+{Name: "Wayne", Age: 42}
 ```
 
-### Objects
+`Pretty = true` adds line breaks and indentation using `IndentSize`.
 
-Formatted as:
+## Limits and cycles
 
-```text
-{ PropertyA = ValueA, PropertyB = ValueB }
-```
+- Values beyond `MaxDepth` are rendered as `<max depth>`.
+- Collection entries beyond `MaxItems` are represented by `<max items>`.
+- Circular references are rendered as `<Circular Reference>`.
+- Indexer properties are skipped.
+- Reflection getters that throw are represented as `<error>`.
 
----
+Reference tracking applies to the active traversal path, so the same object may be rendered again when it appears in separate branches without forming a cycle.
 
-## 2. Depth Limiting
+## Compatibility
 
-When `MaxDepth` is exceeded, nested values are replaced with:
-
-```text
-…
-```
-
----
-
-## 3. Cycle Detection
-
-Cycles are represented using the cycle marker:
-
-```text
-↻
-```
-
-This prevents infinite recursion and ensures deterministic output.
-
----
-
-## 4. Max Items
-
-When `MaxItems` is exceeded during enumeration:
-
-```text
-… (truncated)
-```
-
-This ensures bounded traversal and predictable output size.
-
----
-
-## 5. Ordering Rules
-
-To guarantee deterministic output:
-
-- Properties are sorted alphabetically
-- Fields are sorted alphabetically
-- Dictionary keys are sorted by their string representation
-
-This ensures stable output across runs and environments.
-
----
-
-## 6. Error Handling
-
-ObjectPrinter must gracefully handle reflection and enumeration errors:
-
-- Skip getters that throw exceptions
-- Skip indexers
-- Skip inaccessible members unless `IncludePrivateFields = true`
-- Never propagate exceptions from reflection or enumeration
-
-These rules ensure safe, predictable formatting even for complex or hostile object graphs.
+The core formatter and optional LINQ package target `netstandard2.0` and `net8.0`. Formatting behavior is kept the same across both target frameworks.

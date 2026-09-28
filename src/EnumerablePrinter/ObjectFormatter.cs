@@ -29,7 +29,8 @@ public static class ObjectFormatter
     /// <param name="options">Optional formatting options.</param>
     public static void Write(object? value, TextWriter writer, PrintOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(writer);
+        if (writer is null)
+            throw new ArgumentNullException(nameof(writer));
         writer.Write(Default.Format(value, options ?? new PrintOptions()));
     }
 }

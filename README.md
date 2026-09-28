@@ -30,6 +30,7 @@ This makes the library easier to understand, easier to maintain, and better alig
 - supports console output or any `TextWriter`
 - supports configurable output through `PrintOptions`
 - exposes `ObjectFormatter` for formatting without console output
+- provides a chainable `Format()` extension that returns diagnostic text without writing it
 - keeps the public API intentionally small and focused
 - includes optional Python-style slicing through the separate `EnumerablePrinter.Linq` project
 - includes a separate Roslyn analyzer project for flagging `Print()` calls in performance-sensitive code
@@ -73,6 +74,20 @@ Positive-index slices stream from the source; slices using negative indices buff
 dotnet add package EnumerablePrinter
 ```
 
+## Supported frameworks
+
+The core `EnumerablePrinter` package targets `netstandard2.0` and `net8.0`.
+This supports .NET Framework 4.7.2 and later, .NET Core, and modern .NET applications without maintaining separate formatter implementations.
+
+The optional `EnumerablePrinter.Linq` package targets the same frameworks. The analyzer remains a separate `netstandard2.0` project.
+
+The repository includes a .NET Framework 4.7.2 compatibility smoke test under `tests/EnumerablePrinter.Compatibility.Tests`. Run it on Windows with:
+
+```powershell
+dotnet build tests/EnumerablePrinter.Compatibility.Tests/EnumerablePrinter.Compatibility.Tests.csproj -c Release
+& .\tests\EnumerablePrinter.Compatibility.Tests\bin\Release\net472\EnumerablePrinter.Compatibility.Tests.exe
+```
+
 ## Roslyn analyzer
 
 The repository also contains `EnumerablePrinter.Analyzers`, a separate `netstandard2.0` Roslyn analyzer project. It defines diagnostic `EP0001`, which reports calls to `EnumerablePrinter.Extensions.PrintExtensions.Print` and suggests explicit formatting or logging instead.
@@ -113,7 +128,25 @@ This follows the same formatting path as `Print()`, but makes the console intent
 
 ### Formatting without output
 
-Use `ObjectFormatter` when the formatted text should be returned or written by the caller:
+Use `Format()` when you want a diagnostic string to pass to a logger or write to a destination you choose. It uses the same formatting rules and `PrintOptions` as `Print()`, but does not write output:
+
+```csharp
+using EnumerablePrinter.Abstractions;
+using EnumerablePrinter.Extensions;
+
+var details = request.Format(new PrintOptions
+{
+    Pretty = true,
+    MaxDepth = 4,
+    MaxItems = 50
+});
+
+logger.LogError(exception, "Request details: {Details}", details);
+```
+
+`Format()` returns diagnostic text, not JSON or HTML-encoded content. Encode it at the HTML output boundary, and use a serializer when you need a serialization contract.
+
+`ObjectFormatter` remains available when you prefer a static entry point or need to write directly to a `TextWriter`:
 
 ```csharp
 using EnumerablePrinter;

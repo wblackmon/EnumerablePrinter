@@ -16,6 +16,7 @@ NestedDemo.Run();
 ObjectDemo.Run();
 CustomOptionsDemo.Run();
 SliceDemo.Run();
+FormatDemo.Run();
 
 Console.WriteLine();
 Console.WriteLine("=== End of Demo ===");

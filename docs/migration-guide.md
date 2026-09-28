@@ -1,101 +1,60 @@
-# Migration Guide: EnumerablePrinter → System.Formatting.ObjectPrinter & System.Linq.SequenceExtensions
+# EnumerablePrinter Migration Guide
 
-## Overview
+## 1.x to 2.x
 
-This guide helps developers migrate from the existing EnumerablePrinter library to the new runtime + SDK modules. The new APIs provide deterministic formatting, safer reflection behavior, and Python‑style slicing for all `IEnumerable<T>` sequences.
+Version 2.x focuses on object formatting and printing. Collection helper methods that duplicated functionality already provided by the .NET framework were removed from the core package.
 
----
+### Printing
 
-## 1. Object Printing
-
-### Legacy API (Object Printing)
+The extension API remains available:
 
 ```csharp
-person.Print();
+using EnumerablePrinter.Extensions;
+
+value.Print();
+value.PrintToConsole();
 ```
 
-### Updated API (Object Printing)
+For formatting without writing output:
 
 ```csharp
-ObjectPrinter.Format(person);
+using EnumerablePrinter;
+
+var text = ObjectFormatter.Format(value);
 ```
 
-### Options Mapping
+### Sequence operations
 
-| Old Option         | New Option             |
-|--------------------|------------------------|
-| MaxDepth           | MaxDepth               |
-| MaxItems           | MaxItems               |
-| SingleLine         | SingleLine             |
-| IncludePrivate     | IncludePrivateFields   |
-
-The new `ObjectPrintOptions` class preserves all existing behaviors while adding culture support, deterministic ordering, and safer reflection traversal.
-
----
-
-## 2. Sequence Slicing
-
-### Legacy API (Sequence Slicing)
+Use standard LINQ APIs for general sequence operations such as filtering, projection, skipping, taking, and ordering. Optional Python-style slicing is available from the separate `EnumerablePrinter.Linq` project:
 
 ```csharp
-numbers.Slice(1, 5);
+using EnumerablePrinter.Linq;
+
+var result = values.Slice(start: 1, end: 5, step: 2);
 ```
 
-### Updated API (Sequence Slicing)
+The slicing extension is not part of the core `EnumerablePrinter` package.
+
+### Formatting options
+
+`PrintOptions` controls pretty output, indentation, maximum depth, maximum items, null handling, and private-member inclusion:
 
 ```csharp
-numbers.Slice(1, 5);
+using EnumerablePrinter.Abstractions;
+using EnumerablePrinter.Extensions;
+
+value.Print(options: new PrintOptions
+{
+    Pretty = true,
+    MaxDepth = 4,
+    MaxItems = 20
+});
 ```
 
-The slicing API is preserved exactly, but now lives in the `System.Linq` namespace and is part of the official SDK module. Negative indexing, step semantics, and deferred execution remain identical.
+The default output remains compact.
 
----
+### Target frameworks
 
-## 3. Diagnostics
+Version 2.x targets `netstandard2.0` and `net8.0`. The `netstandard2.0` asset is intended for .NET Framework 4.7.2 and later, .NET Core, and other compatible runtimes.
 
-Existing diagnostic helpers (AsyncDebug, DebugUtility, DebugSeverity) remain compatible.
-No migration is required for diagnostic code.
-
----
-
-## 4. Analyzer Migration
-
-Analyzer rules move from:
-
-```text
-EnumerablePrinter.Analyzers
-```
-
-to:
-
-```text
-System.Formatting.Analyzers
-```
-
-The rule identifiers and diagnostics remain the same, but the namespace changes to align with the new runtime module.
-
----
-
-## 5. Benchmark Migration
-
-Benchmark projects should reference:
-
-- `System.Formatting.ObjectPrinter`
-- `System.Linq.SequenceExtensions`
-
-This ensures benchmarks measure the new deterministic formatting engine and slicing implementation.
-
----
-
-## Summary
-
-The migration path is intentionally minimal:
-
-- Printing → rename to `ObjectPrinter.Format`
-- Options → same names, same semantics
-- Slicing → identical API, new namespace
-- Diagnostics → unchanged
-- Analyzers → new namespace
-- Benchmarks → update references
-
-The new modules provide deterministic behavior, safer reflection, and improved developer ergonomics while preserving the original EnumerablePrinter design philosophy.
+The analyzer remains a separate `netstandard2.0` project and is not included in the core runtime package.

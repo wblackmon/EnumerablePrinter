@@ -35,6 +35,12 @@ jobs:
       - name: Pack
         run: dotnet pack src/EnumerablePrinter/EnumerablePrinter.csproj -c Release --no-build -o ./nupkg
 
+      - name: Verify compatibility assets
+        shell: bash
+        run: |
+          package=$(find ./nupkg -maxdepth 1 -name 'EnumerablePrinter.*.nupkg' -print -quit)
+          unzip -l "$package" | grep -E 'lib/(netstandard2.0|net8.0)/EnumerablePrinter.dll'
+
       - name: NuGet Login
         id: nuget-login
         uses: NuGet/login@v1

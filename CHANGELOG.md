@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- added a chainable `Format()` extension that returns diagnostic text without writing to an output destination
+- added `netstandard2.0` and `net8.0` targets to the core and optional LINQ packages
+- preserved the existing public API and formatting behavior across both targets
+- added compatibility support for nullable annotations and `init` properties on `netstandard2.0`
+
 ## 2.1.0 - Configurable Print Options
 
 - added `PrintOptions` for controlling pretty output, indentation, recursion depth, collection limits, null handling, and private-member inclusion
