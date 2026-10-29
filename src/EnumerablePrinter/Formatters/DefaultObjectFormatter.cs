@@ -6,7 +6,8 @@ using EnumerablePrinter.Abstractions;
 namespace EnumerablePrinter.Formatters;
 
 /// <summary>
-/// Formats objects, collections, dictionaries, and scalar values using the default printer rules.
+/// Formats objects, collections, dictionaries, and scalar values
+/// using the default printer rules.
 /// </summary>
 public sealed class DefaultObjectFormatter : IObjectFormatter
 {
@@ -18,24 +19,40 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
     /// <returns>The formatted value.</returns>
     public string Format(object? value, PrintOptions options)
     {
+        // ArgumentNullException.ThrowIfNull is not available in netstandard2.0.
         if (options is null)
             throw new ArgumentNullException(nameof(options));
 
         if (options.MaxDepth < 0)
             throw new ArgumentOutOfRangeException(nameof(options.MaxDepth));
+
         if (options.MaxItems < 0)
             throw new ArgumentOutOfRangeException(nameof(options.MaxItems));
+
         if (options.IndentSize < 0)
             throw new ArgumentOutOfRangeException(nameof(options.IndentSize));
 
-        var writer = new StringWriter();
-        var activeReferences = new HashSet<object>(ReferenceEqualityComparer.Instance);
+        using var writer = new StringWriter();
 
-        WriteValue(value, writer, options, activeReferences, depth: 0);
+        var activeReferences =
+            new HashSet<object>(ReferenceEqualityComparer.Instance);
+
+        WriteValue(
+            value,
+            writer,
+            options,
+            activeReferences,
+            depth: 0);
+
         return writer.ToString();
     }
 
-    private static void WriteValue(object? value, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
+    private static void WriteValue(
+        object? value,
+        TextWriter writer,
+        PrintOptions options,
+        HashSet<object> activeReferences,
+        int depth)
     {
         if (depth > options.MaxDepth)
         {
@@ -47,14 +64,12 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         {
             if (options.IncludeNulls)
                 writer.Write("null");
+
             return;
         }
 
-        if (value is string s)
-        {
-            writer.Write($"\"{s}\"");
+        if (TryWriteScalar(value, writer))
             return;
-        }
 
         if (value is byte[] bytes)
         {
@@ -64,44 +79,174 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
 
         if (value is IDictionary dictionary)
         {
-            WriteDictionary(dictionary, writer, options, activeReferences, depth);
+            WriteDictionary(
+                dictionary,
+                writer,
+                options,
+                activeReferences,
+                depth);
+
             return;
         }
 
-        if (value is IEnumerable enumerable && value is not string)
+        if (value is IEnumerable enumerable)
         {
-            WriteEnumerable(enumerable, writer, options, activeReferences, depth);
+            WriteEnumerable(
+                enumerable,
+                writer,
+                options,
+                activeReferences,
+                depth);
+
             return;
         }
 
-        if (IsScalarValueType(value))
-        {
-            writer.Write($"\"{value}\"");
-            return;
-        }
-
-        WriteObject(value, writer, options, activeReferences, depth);
+        WriteObject(
+            value,
+            writer,
+            options,
+            activeReferences,
+            depth);
     }
 
-    private static bool IsScalarValueType(object value)
+    /// <summary>
+    /// Writes built-in scalar values using C#-style display rules.
+    /// C# literal suffixes such as m, f, d, and L are not included.
+    /// Returns false for complex objects and user-defined structures.
+    /// </summary>
+    private static bool TryWriteScalar(
+        object value,
+        TextWriter writer)
     {
-        return value is ValueType &&
-               value is not int &&
-               value is not long &&
-               value is not short &&
-               value is not double &&
-               value is not float &&
-               value is not decimal &&
-               value is not bool &&
-               value is not char;
+        switch (value)
+        {
+            // Text types
+            case string text:
+                WriteQuotedString(text, writer);
+                return true;
+
+            case char character:
+                WriteQuotedChar(character, writer);
+                return true;
+
+            // Boolean
+            case bool boolean:
+                writer.Write(boolean ? "true" : "false");
+                return true;
+
+            // Signed integral types
+            case sbyte number:
+                writer.Write(number);
+                return true;
+
+            case short number:
+                writer.Write(number);
+                return true;
+
+            case int number:
+                writer.Write(number);
+                return true;
+
+            case long number:
+                writer.Write(number);
+                return true;
+
+            // Unsigned integral types
+            case byte number:
+                writer.Write(number);
+                return true;
+
+            case ushort number:
+                writer.Write(number);
+                return true;
+
+            case uint number:
+                writer.Write(number);
+                return true;
+
+            case ulong number:
+                writer.Write(number);
+                return true;
+
+            // Native-sized integral types
+            case IntPtr number:
+                writer.Write(number);
+                return true;
+
+            case UIntPtr number:
+                writer.Write(number);
+                return true;
+
+            // Floating-point and decimal types
+            case float number:
+                writer.Write(number);
+                return true;
+
+            case double number:
+                writer.Write(number);
+                return true;
+
+            case decimal number:
+                writer.Write(number);
+                return true;
+
+            // Date and time types available in netstandard2.0
+            case DateTime dateTime:
+                writer.Write(dateTime);
+                return true;
+
+            case DateTimeOffset dateTimeOffset:
+                writer.Write(dateTimeOffset);
+                return true;
+
+            case TimeSpan duration:
+                writer.Write(duration);
+                return true;
+
+            // Other common scalar types
+            case Guid guid:
+                writer.Write(guid);
+                return true;
+
+            // All enum types
+            case Enum enumValue:
+                writer.Write(enumValue);
+                return true;
+        }
+
+        /*
+         * System.Half, System.DateOnly, and System.TimeOnly are not
+         * available in the netstandard2.0 reference assemblies.
+         *
+         * Checking their fully qualified runtime names allows the
+         * netstandard2.0 build to recognize them when it is consumed
+         * by an application running on a newer .NET runtime.
+         */
+        switch (value.GetType().FullName)
+        {
+            case "System.Half":
+            case "System.DateOnly":
+            case "System.TimeOnly":
+                writer.Write(value);
+                return true;
+
+            default:
+                return false;
+        }
     }
 
-    private static void WriteEnumerable(IEnumerable seq, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
+    private static void WriteEnumerable(
+        IEnumerable sequence,
+        TextWriter writer,
+        PrintOptions options,
+        HashSet<object> activeReferences,
+        int depth)
     {
-        if (!TryEnter(seq, activeReferences, writer))
+        if (!TryEnter(sequence, activeReferences, writer))
             return;
 
-        var enumerator = seq.GetEnumerator();
+        var enumerator = sequence.GetEnumerator();
+
         try
         {
             if (!enumerator.MoveNext())
@@ -112,39 +257,49 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
 
             writer.Write("[");
 
-            bool first = true;
-            int count = 0;
+            var first = true;
+            var count = 0;
 
             do
             {
                 var item = enumerator.Current;
-                if (item is not null || options.IncludeNulls)
+
+                if (item is null && !options.IncludeNulls)
+                    continue;
+
+                if (count >= options.MaxItems)
                 {
-                    if (count++ >= options.MaxItems)
-                    {
-                        writer.Write(" <max items> ");
-                        break;
-                    }
-
-                    if (!first)
-                        writer.Write(", ");
-                    first = false;
-
-                    if (options.Pretty)
-                    {
-                        writer.WriteLine();
-                        writer.Write(new string(' ', (depth + 1) * options.IndentSize));
-                    }
-
-                    WriteValue(item, writer, options, activeReferences, depth + 1);
+                    // Preserve the package's existing max-items format.
+                    writer.Write(" <max items> ");
+                    break;
                 }
+
+                count++;
+
+                if (!first)
+                    writer.Write(", ");
+
+                first = false;
+
+                if (options.Pretty)
+                {
+                    writer.WriteLine();
+                    WriteIndent(writer, depth + 1, options.IndentSize);
+                }
+
+                WriteValue(
+                    item,
+                    writer,
+                    options,
+                    activeReferences,
+                    depth + 1);
             }
             while (enumerator.MoveNext());
 
             if (options.Pretty && !first)
             {
                 writer.WriteLine();
-                writer.Write(new string(' ', depth * options.IndentSize));
+                WriteIndent(writer, depth, options.IndentSize);
             }
 
             writer.Write("]");
@@ -152,64 +307,92 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         finally
         {
             (enumerator as IDisposable)?.Dispose();
-            activeReferences.Remove(seq);
+            activeReferences.Remove(sequence);
         }
     }
 
-    private static void WriteDictionary(IDictionary dict, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
+    private static void WriteDictionary(
+        IDictionary dictionary,
+        TextWriter writer,
+        PrintOptions options,
+        HashSet<object> activeReferences,
+        int depth)
     {
-        if (!TryEnter(dict, activeReferences, writer))
+        if (!TryEnter(dictionary, activeReferences, writer))
             return;
 
-        if (dict.Count == 0)
+        try
         {
-            writer.Write("{ }");
-            activeReferences.Remove(dict);
-            return;
-        }
-
-        writer.Write("{");
-
-        bool first = true;
-        int count = 0;
-
-        foreach (DictionaryEntry entry in dict)
-        {
-            if (entry.Value is null && !options.IncludeNulls)
-                continue;
-
-            if (count++ >= options.MaxItems)
+            if (dictionary.Count == 0)
             {
-                writer.Write(" <max items> ");
-                break;
+                writer.Write("{ }");
+                return;
             }
 
-            if (!first)
-                writer.Write(", ");
-            first = false;
+            writer.Write("{");
 
-            if (options.Pretty)
+            var first = true;
+            var count = 0;
+
+            foreach (DictionaryEntry entry in dictionary)
+            {
+                if (entry.Value is null && !options.IncludeNulls)
+                    continue;
+
+                if (count >= options.MaxItems)
+                {
+                    // Preserve the package's existing max-items format.
+                    writer.Write(" <max items> ");
+                    break;
+                }
+
+                count++;
+
+                if (!first)
+                    writer.Write(", ");
+
+                first = false;
+
+                if (options.Pretty)
+                {
+                    writer.WriteLine();
+                    WriteIndent(writer, depth + 1, options.IndentSize);
+                }
+
+                WriteValue(
+                    entry.Key,
+                    writer,
+                    options,
+                    activeReferences,
+                    depth + 1);
+
+                writer.Write(": ");
+
+                WriteValue(
+                    entry.Value,
+                    writer,
+                    options,
+                    activeReferences,
+                    depth + 1);
+            }
+
+            if (options.Pretty && !first)
             {
                 writer.WriteLine();
-                writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+                WriteIndent(writer, depth, options.IndentSize);
             }
 
-            WriteValue(entry.Key, writer, options, activeReferences, depth + 1);
-            writer.Write(": ");
-            WriteValue(entry.Value, writer, options, activeReferences, depth + 1);
+            writer.Write("}");
         }
-
-        if (options.Pretty && !first)
+        finally
         {
-            writer.WriteLine();
-            writer.Write(new string(' ', depth * options.IndentSize));
+            activeReferences.Remove(dictionary);
         }
-
-        writer.Write("}");
-        activeReferences.Remove(dict);
     }
 
-    private static void WriteByteArray(byte[] bytes, TextWriter writer)
+    private static void WriteByteArray(
+        byte[] bytes,
+        TextWriter writer)
     {
         if (bytes.Length == 0)
         {
@@ -218,122 +401,288 @@ public sealed class DefaultObjectFormatter : IObjectFormatter
         }
 
         writer.Write("[");
+
         for (var index = 0; index < bytes.Length; index++)
         {
-            writer.Write(bytes[index]);
-            if (index < bytes.Length - 1)
+            if (index > 0)
                 writer.Write(", ");
+
+            writer.Write(bytes[index]);
         }
+
         writer.Write("]");
     }
 
-    private static void WriteObject(object obj, TextWriter writer, PrintOptions options, HashSet<object> activeReferences, int depth)
+    private static void WriteObject(
+        object value,
+        TextWriter writer,
+        PrintOptions options,
+        HashSet<object> activeReferences,
+        int depth)
     {
-        if (!TryEnter(obj, activeReferences, writer))
+        if (!TryEnter(value, activeReferences, writer))
             return;
 
-        var type = obj.GetType();
-
-        var props = type.GetProperties(
-            BindingFlags.Public | BindingFlags.Instance |
-            (options.IncludePrivateProperties ? BindingFlags.NonPublic : 0))
-            .Where(property => property.GetIndexParameters().Length == 0)
-            .ToArray();
-
-        var fields = type.GetFields(
-            BindingFlags.Public | BindingFlags.Instance |
-            (options.IncludePrivateFields ? BindingFlags.NonPublic : 0))
-            .Where(field => !field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
-            .ToArray();
-
-        if (props.Length == 0 && fields.Length == 0)
+        try
         {
-            writer.Write(obj.ToString());
-            activeReferences.Remove(obj);
-            return;
-        }
+            var type = value.GetType();
 
-        writer.Write("{");
+            var properties = type
+                .GetProperties(
+                    BindingFlags.Public |
+                    BindingFlags.Instance |
+                    (options.IncludePrivateProperties
+                        ? BindingFlags.NonPublic
+                        : 0))
+                .Where(property =>
+                    property.GetIndexParameters().Length == 0)
+                .ToArray();
 
-        bool first = true;
+            var fields = type
+                .GetFields(
+                    BindingFlags.Public |
+                    BindingFlags.Instance |
+                    (options.IncludePrivateFields
+                        ? BindingFlags.NonPublic
+                        : 0))
+                .Where(field =>
+                    !field.IsDefined(
+                        typeof(CompilerGeneratedAttribute),
+                        inherit: false))
+                .ToArray();
 
-        foreach (var p in props)
-        {
-            var val = SafeGet(() => p.GetValue(obj));
-            if (val is null && !options.IncludeNulls)
-                continue;
-
-            if (!first)
-                writer.Write(", ");
-            first = false;
-
-            if (options.Pretty)
+            if (properties.Length == 0 && fields.Length == 0)
             {
-                writer.WriteLine();
-                writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+                writer.Write(value);
+                return;
             }
 
-            writer.Write(p.Name);
-            writer.Write(": ");
+            writer.Write("{");
 
-            WriteValue(val, writer, options, activeReferences, depth + 1);
-        }
+            var first = true;
 
-        foreach (var f in fields)
-        {
-            var val = SafeGet(() => f.GetValue(obj));
-            if (val is null && !options.IncludeNulls)
-                continue;
-
-            if (!first)
-                writer.Write(", ");
-            first = false;
-
-            if (options.Pretty)
+            foreach (var property in properties)
             {
-                writer.WriteLine();
-                writer.Write(new string(' ', (depth + 1) * options.IndentSize));
+                var propertyValue = SafeGet(
+                    () => property.GetValue(value));
+
+                if (propertyValue is null && !options.IncludeNulls)
+                    continue;
+
+                WriteMemberPrefix(
+                    property.Name,
+                    writer,
+                    options,
+                    depth,
+                    ref first);
+
+                WriteValue(
+                    propertyValue,
+                    writer,
+                    options,
+                    activeReferences,
+                    depth + 1);
             }
 
-            writer.Write(f.Name);
-            writer.Write(": ");
+            foreach (var field in fields)
+            {
+                var fieldValue = SafeGet(
+                    () => field.GetValue(value));
 
-            WriteValue(val, writer, options, activeReferences, depth + 1);
+                if (fieldValue is null && !options.IncludeNulls)
+                    continue;
+
+                WriteMemberPrefix(
+                    field.Name,
+                    writer,
+                    options,
+                    depth,
+                    ref first);
+
+                WriteValue(
+                    fieldValue,
+                    writer,
+                    options,
+                    activeReferences,
+                    depth + 1);
+            }
+
+            if (options.Pretty && !first)
+            {
+                writer.WriteLine();
+                WriteIndent(writer, depth, options.IndentSize);
+            }
+
+            writer.Write("}");
         }
+        finally
+        {
+            activeReferences.Remove(value);
+        }
+    }
 
-        if (options.Pretty && !first)
+    private static void WriteMemberPrefix(
+        string memberName,
+        TextWriter writer,
+        PrintOptions options,
+        int depth,
+        ref bool first)
+    {
+        if (!first)
+            writer.Write(", ");
+
+        first = false;
+
+        if (options.Pretty)
         {
             writer.WriteLine();
-            writer.Write(new string(' ', depth * options.IndentSize));
+            WriteIndent(writer, depth + 1, options.IndentSize);
         }
 
-        writer.Write("}");
-        activeReferences.Remove(obj);
+        writer.Write(memberName);
+        writer.Write(": ");
     }
 
-    private static bool TryEnter(object obj, HashSet<object> activeReferences, TextWriter writer)
+    private static void WriteQuotedString(
+        string value,
+        TextWriter writer)
     {
-        if (!activeReferences.Add(obj))
+        writer.Write('"');
+
+        foreach (var character in value)
         {
-            writer.Write("<Circular Reference>");
-            return false;
+            WriteEscapedCharacter(
+                character,
+                writer,
+                quoteCharacter: '"');
         }
 
-        return true;
+        writer.Write('"');
     }
 
-    private sealed class ReferenceEqualityComparer : IEqualityComparer<object>
+    private static void WriteQuotedChar(
+        char value,
+        TextWriter writer)
+    {
+        writer.Write('\'');
+
+        WriteEscapedCharacter(
+            value,
+            writer,
+            quoteCharacter: '\'');
+
+        writer.Write('\'');
+    }
+
+    private static void WriteEscapedCharacter(
+        char value,
+        TextWriter writer,
+        char quoteCharacter)
+    {
+        switch (value)
+        {
+            case '\\':
+                writer.Write(@"\\");
+                break;
+
+            case '"' when quoteCharacter == '"':
+                writer.Write("\\\"");
+                break;
+
+            case '\'' when quoteCharacter == '\'':
+                writer.Write("\\'");
+                break;
+
+            case '\0':
+                writer.Write(@"\0");
+                break;
+
+            case '\a':
+                writer.Write(@"\a");
+                break;
+
+            case '\b':
+                writer.Write(@"\b");
+                break;
+
+            case '\f':
+                writer.Write(@"\f");
+                break;
+
+            case '\n':
+                writer.Write(@"\n");
+                break;
+
+            case '\r':
+                writer.Write(@"\r");
+                break;
+
+            case '\t':
+                writer.Write(@"\t");
+                break;
+
+            case '\v':
+                writer.Write(@"\v");
+                break;
+
+            default:
+                writer.Write(value);
+                break;
+        }
+    }
+
+    private static void WriteIndent(
+        TextWriter writer,
+        int depth,
+        int indentSize)
+    {
+        writer.Write(new string(' ', depth * indentSize));
+    }
+
+    private static bool TryEnter(
+        object value,
+        HashSet<object> activeReferences,
+        TextWriter writer)
+    {
+        if (activeReferences.Add(value))
+            return true;
+
+        writer.Write("<Circular Reference>");
+        return false;
+    }
+
+    private static object? SafeGet(
+        Func<object?> getter)
+    {
+        try
+        {
+            return getter();
+        }
+        catch
+        {
+            return "<error>";
+        }
+    }
+
+    private sealed class ReferenceEqualityComparer
+        : IEqualityComparer<object>
     {
         public static readonly ReferenceEqualityComparer Instance = new();
 
-        public new bool Equals(object? x, object? y) => ReferenceEquals(x, y);
+        private ReferenceEqualityComparer()
+        {
+        }
 
-        public int GetHashCode(object obj) => RuntimeHelpers.GetHashCode(obj);
-    }
+        public new bool Equals(
+            object? x,
+            object? y)
+        {
+            return ReferenceEquals(x, y);
+        }
 
-    private static object? SafeGet(Func<object?> getter)
-    {
-        try { return getter(); }
-        catch { return "<error>"; }
+        public int GetHashCode(object value)
+        {
+            return RuntimeHelpers.GetHashCode(value);
+        }
     }
 }

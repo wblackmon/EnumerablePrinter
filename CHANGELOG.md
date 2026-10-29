@@ -2,10 +2,36 @@
 
 ## Unreleased
 
+### Added
+
 - added a chainable `Format()` extension that returns diagnostic text without writing to an output destination
 - added `netstandard2.0` and `net8.0` targets to the core and optional LINQ packages
-- preserved the existing public API and formatting behavior across both targets
 - added compatibility support for nullable annotations and `init` properties on `netstandard2.0`
+- added explicit scalar formatting for common .NET value types
+- added scalar support for `sbyte`, `byte`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `IntPtr`, and `UIntPtr`
+- added scalar support for `Half`, `float`, `double`, and `decimal`
+- added scalar support for `bool`, `char`, `string`, and enum values
+- added scalar support for `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `TimeSpan`, and `Guid`
+- added escaping for special characters in strings and characters
+- added demo coverage for integral, floating-point, decimal, boolean, text, enum, date/time, identifier, and mixed scalar values
+- added regression tests covering supported scalar types, nullable values, escaping, and user-defined structs
+
+### Changed
+
+- common .NET scalar values are now formatted directly instead of being expanded through reflection
+- numeric values use their normal .NET representation without C# literal suffixes such as `m`, `f`, `d`, `L`, and `UL`
+- boolean values now render using C#-style `true` and `false`
+- strings use double quotes and characters use single quotes
+- enums render using their normal value representation
+- common date, time, and identifier types render using their normal .NET representation
+- user-defined structs continue through structured object formatting instead of being treated as built-in scalar values
+- preserved the existing public API and collection-formatting behavior across `netstandard2.0` and `net8.0`
+
+### Fixed
+
+- fixed `decimal` values falling through to reflection and exposing implementation details such as `{Scale: "1"}` instead of their numeric representation
+- fixed built-in value types being incorrectly treated as complex objects during formatter dispatch
+- fixed string and character output so special characters such as newlines, tabs, quotes, and backslashes are escaped consistently
 
 ## 2.1.0 - Configurable Print Options
 
@@ -19,69 +45,4 @@
 
 - added the separate `EnumerablePrinter.Linq` project for sequence extensions
 - added `Slice<T>(start, end, step)` for `IEnumerable<T>` values
-- added positive-index and step slicing with deferred execution
-- added negative-index support by buffering the source when required
-- added demo coverage and regression tests for integer, string, character, and custom-object sequences
-
-The core `EnumerablePrinter` package remains focused on formatting and printing. Sequence slicing is provided as an optional project so it can be used alongside the printer without expanding the core API.
-
-### Analyzer support
-
-- added the separate `EnumerablePrinter.Analyzers` project targeting `netstandard2.0`
-- added diagnostic `EP0001` for calls to `EnumerablePrinter.Extensions.PrintExtensions.Print`
-- added analyzer tests covering the supported `Print()` extension and unrelated extension methods
-
----
-
-## Major Rewrite and API Cleanup
-
-The library has been completely rearchitected and recoded around a single responsibility: printing objects and collections clearly for debugging and diagnostics.
-
-The previous implementation mixed printer behavior with convenience LINQ-style helpers. That broad scope was removed in favor of a leaner, more maintainable design focused on formatting and readability.
-
-### Removed Features That Duplicated the .NET Framework
-
-The following APIs were removed because they duplicated functionality already available in the BCL and did not belong in a library whose core purpose is printing:
-
-- `Slice(...)`
-- `Chunk(...)`
-- `IsAlphabetical(...)`
-
-#### `Slice(...)`
-
-This API duplicated common .NET sequence operations such as `Skip(...)`, `Take(...)`, `Where(...)`, and range-based filtering. Standard LINQ already provides the idiomatic mechanism for slicing and filtering sequences.
-
-#### `Chunk(...)`
-
-Starting with .NET 6, the framework includes `Enumerable.Chunk(int size)`. Keeping a custom implementation would only duplicate a built-in API and create confusion for developers.
-
-#### `IsAlphabetical(...)`
-
-This convenience method was simply a thin wrapper over LINQ patterns like `OrderBy(...)` and `SequenceEqual(...)`. It added surface area without providing unique value.
-
----
-
-## Post-Review Cleanup
-
-Following a focused code review, the remaining polish items were addressed to make the library easier to use and easier to maintain:
-
-- corrected the `Abstractions` namespace naming typo
-- added an explicit `PrintToConsole()` API for clarity and discoverability
-- streamlined the formatter’s type-dispatch logic into clearer helper methods
-- added regression tests for console output and circular-reference handling
-
-These changes keep the library aligned with its purpose as a single-purpose debug-printing utility without reintroducing redundant framework functionality.
-
----
-
-### Why the Rewrite Was Necessary
-
-This cleanup was done to:
-
-- remove redundant APIs that already exist in .NET
-- reduce maintenance and complexity
-- avoid shadowing built-in framework methods
-- keep the library focused on its real purpose: a clean, predictable object printer
-- simplify the architecture around a single formatter and a small public surface
-
-The project is now a focused, single-purpose dynamic printer with no redundant LINQ helper APIs.
+- added positive

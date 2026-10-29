@@ -201,13 +201,18 @@ public class PrintExtensionsTests
     }
 
     [TestMethod]
-    public void Print_ObjectWithUnsupportedTypeProperty_FormatsUsingToString()
+    public void Print_ObjectWithDateTimeProperty_FormatsAsScalar()
     {
-        var obj = new { Timestamp = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc) };
+        var obj = new
+        {
+            Timestamp = new DateTime(2024, 1, 1)
+        };
 
         obj.Print();
 
-        Assert.AreEqual("{Timestamp: \"" + obj.Timestamp.ToString() + "\"}\n", Output);
+        Assert.AreEqual(
+            $"{{Timestamp: {obj.Timestamp}}}\n",
+            Output);
     }
 
     // ------------------------------

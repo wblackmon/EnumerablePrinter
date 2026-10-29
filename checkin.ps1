@@ -20,8 +20,11 @@ function Write-Log {
 
 function Invoke-Checks {
     Write-Log "🔍 Running build and test checks..."
-    dotnet build $TestProjectPath --nologo --verbosity quiet
+    dotnet build EnumerablePrinter.sln --nologo --verbosity quiet
     if ($LASTEXITCODE -ne 0) { throw "❌ Build failed." }
+
+    dotnet test tests/tests.sln --no-build --nologo --verbosity quiet
+    if ($LASTEXITCODE -ne 0) { throw "❌ Tests failed." }
 
     dotnet test $TestProjectPath --no-build --nologo --verbosity quiet
     if ($LASTEXITCODE -ne 0) { throw "❌ Tests failed." }
